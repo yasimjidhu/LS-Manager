@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Calendar, MapPin, Box, CheckCircle2, Clock, AlertCircle, Filter, X, Users, UserPlus, Check, XCircle } from 'lucide-react';
+import { Calendar, MapPin, Box, CheckCircle2, Clock, AlertCircle, Users, UserPlus, Check, XCircle, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { JobsService } from '../../services/jobs.service';
 import { JobRequestsService } from '../../services/job-requests.service';
@@ -54,21 +54,7 @@ const JobCard = ({ job, onStatusUpdate, onViewDetails, onRequestJoin, user }: { 
         });
     };
 
-    const getStatusBadge = (status: string) => {
-        const badges = {
-            PENDING: { color: 'bg-blue-500/10 text-blue-500 border-blue-500/20', label: 'Planned' },
-            PLANNED: { color: 'bg-blue-500/10 text-blue-500 border-blue-500/20', label: 'Planned' },
-            ONGOING: { color: 'bg-amber-500/10 text-amber-500 border-amber-500/20', label: 'Ongoing' },
-            COMPLETED: { color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20', label: 'Completed' },
-            CANCELLED: { color: 'bg-red-500/10 text-red-500 border-red-500/20', label: 'Cancelled' },
-        };
-        const badge = badges[status as keyof typeof badges] || badges.PENDING;
-        return (
-            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${badge.color}`}>
-                {badge.label}
-            </span>
-        );
-    };
+
 
     // Crew Progress
     const { approvedCount, required, isFull, percentage } = getCrewProgress(job);

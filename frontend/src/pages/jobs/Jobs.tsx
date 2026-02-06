@@ -635,8 +635,10 @@ const Jobs = () => {
         }
     };
 
+
     const handleEventDrop = useCallback(
-        ({ event, start, end }: any) => {
+        (args: any) => {
+            const { event, start, end } = args;
             const updatedJob = { ...event };
             const startDate = moment(start).format('YYYY-MM-DD');
 
