@@ -1,5 +1,5 @@
-import { usePermissions } from '../hooks/usePermissions';
-import { Permission } from '../config/permissions';
+import { usePermissions } from '../../hooks/usePermissions';
+import { Permission } from '../../config/permissions';
 
 interface PermissionGateProps {
     children: React.ReactNode;
