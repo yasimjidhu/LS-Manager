@@ -37,8 +37,13 @@ const EmployeeDetail = () => {
         { id: 'profile', label: 'Profile', icon: User },
         { id: 'jobs', label: 'Job History', icon: Briefcase },
         { id: 'attendance', label: 'Attendance', icon: Calendar },
+
         { id: 'wages', label: 'Wage History', icon: DollarSign }
     ];
+
+    const getInitials = (firstName: string, lastName: string) => {
+        return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`;
+    };
 
     return (
         <div className="min-h-screen bg-[#0B0E14] text-gray-200 p-6">
@@ -64,7 +69,7 @@ const EmployeeDetail = () => {
                 <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-6 mb-6">
                     <div className="flex items-start gap-6">
                         <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold text-2xl">
-                            {employee.firstName[0]}{employee.lastName[0]}
+                            {getInitials(employee.firstName, employee.lastName)}
                         </div>
                         <div className="flex-1">
                             <div className="flex items-center gap-3 mb-2">
