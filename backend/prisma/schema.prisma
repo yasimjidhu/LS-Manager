@@ -1,0 +1,622 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  SUPERVISOR
+  EMPLOYEE
+}
+
+enum ItemStatus {
+  AVAILABLE
+  IN_USE
+  MAINTENANCE
+  DAMAGED
+  RETIRED
+}
+
+enum EventStatus {
+  PLANNED
+  CONFIRMED
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  SENT
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum PaymentMode {
+  CASH
+  UPI
+  BANK_TRANSFER
+  CHEQUE
+}
+
+enum WageModel {
+  FIXED
+  PIECE_RATE
+  PERCENTAGE
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      Role     @default(EMPLOYEE)
+  isActive  Boolean  @default(true)
+  
+  employee  Employee?
+
+  auditLogs AuditLog[]
+  maintenanceReports MaintenanceLog[] @relation("ReportedBy")
+  verifiedAttendance Attendance[]
+  paymentsCollected  Payment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  notifications Notification[]
+  recordedExpenses JobExpense[]
+  jobMessages JobMessage[]
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  title     String
+  message   String
+  type      String   @default("INFO") // INFO, SUCCESS, WARNING, ERROR
+  isRead    Boolean  @default(false)
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  createdAt DateTime @default(now())
+}
+
+model Employee {
+  id             String    @id @default(uuid())
+  firstName      String
+  lastName       String
+  phone          String?
+  skills         String[] // JSON or simple array in Postgres
+  wageModel      WageModel @default(FIXED)
+  baseWage       Decimal   @default(0) @db.Decimal(10, 2)
+  
+  user           User?     @relation(fields: [userId], references: [id])
+  userId         String?   @unique
+
+  assignments    JobAssignment[]
+  attendance     Attendance[]
+  wages          Wage[]
+  wageRates      EmployeeWageRate[]
+  supervisedEvents Event[] @relation("EventSupervisor")
+
+  checkouts      CheckoutLog[]
+  jobRequests    JobRequest[]
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model InventoryCategory {
+  id          String          @id @default(uuid())
+  name        String          @unique
+  description String?
+  items       InventoryItem[]
+
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model InventoryItem {
+  id          String     @id @default(uuid())
+  name        String
+  description String?
+  qrCode      String     @unique // Unique identifier for QR scanning
+  quantity    Int        @default(0) // Total quantity owned
+  price       Decimal    @default(0) @db.Decimal(10, 2) // Rental price per unit
+  status      ItemStatus @default(AVAILABLE)
+  
+  categoryId  String
+  category    InventoryCategory @relation(fields: [categoryId], references: [id])
+
+  maintenanceLogs MaintenanceLog[]
+  quoteItems      QuotationItem[]
+  invoiceItems    InvoiceItem[]
+  wageRates       EmployeeWageRate[] @relation("WageItem")
+  pieceRate       ItemPieceRate?
+
+  checkouts   CheckoutLog[]
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Event {
+  id            String      @id @default(uuid())
+  name          String
+  description   String?
+  location      String
+  startDate     DateTime
+  endDate       DateTime
+  status        EventStatus @default(PLANNED)
+  
+  supervisor    Employee?   @relation("EventSupervisor", fields: [supervisorId], references: [id]) // Optional until assigned
+  supervisorId  String?
+
+  assignments   JobAssignment[]
+  attendance    Attendance[]
+  quotation     Quotation?
+  invoice       Invoice?
+  wages         Wage[]
+  costLedger    JobCostLedger?
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model JobAssignment {
+  id         String   @id @default(uuid())
+  event      Event    @relation(fields: [eventId], references: [id])
+  eventId    String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  employeeId String
+  role       String?  // Specific role for this event e.g. "Sound Engineer"
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([eventId, employeeId])
+}
+
+model Quotation {
+  id            String      @id @default(uuid())
+  event         Event       @relation(fields: [eventId], references: [id])
+  eventId       String      @unique
+  
+  clientName    String
+  clientPhone   String?
+  clientEmail   String?
+  
+  subtotal      Decimal     @default(0) @db.Decimal(10, 2)
+  laborCost     Decimal     @default(0) @db.Decimal(10, 2)
+  transportCost Decimal     @default(0) @db.Decimal(10, 2)
+  taxRate       Decimal     @default(0) @db.Decimal(5, 2) // Percentage
+  taxAmount     Decimal     @default(0) @db.Decimal(10, 2)
+  discount      Decimal     @default(0) @db.Decimal(10, 2)
+  totalAmount   Decimal     @default(0) @db.Decimal(10, 2)
+  
+  status        QuoteStatus @default(DRAFT)
+  items         QuotationItem[]
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  sentAt        DateTime?
+  validUntil    DateTime?
+}
+
+model QuotationItem {
+  id          String        @id @default(uuid())
+  quotation   Quotation     @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  quotationId String
+  
+  item        InventoryItem @relation(fields: [itemId], references: [id])
+  itemId      String
+  
+  quantity    Int
+  unitPrice   Decimal       @db.Decimal(10, 2)
+  totalPrice  Decimal       @db.Decimal(10, 2)
+}
+
+model Invoice {
+  id            String        @id @default(uuid())
+  itemOrder     Int           @default(autoincrement()) // For simple invoice numbers like #1024
+  
+  event         Event?        @relation(fields: [eventId], references: [id])
+  eventId       String?       @unique
+  
+  job           Job?          @relation(fields: [jobId], references: [id])
+  jobId         String?       @unique
+  
+  clientName    String?
+  createdBy     String?
+  approvedBy    String?
+  
+  subtotal      Decimal       @default(0) @db.Decimal(10, 2)
+  laborCost     Decimal       @default(0) @db.Decimal(10, 2)
+  transportCost Decimal       @default(0) @db.Decimal(10, 2)
+  taxAmount     Decimal       @default(0) @db.Decimal(10, 2)
+  discount      Decimal       @default(0) @db.Decimal(10, 2)
+  totalAmount   Decimal       @default(0) @db.Decimal(10, 2)
+  paidAmount    Decimal       @default(0) @db.Decimal(10, 2)
+  balanceAmount Decimal       @default(0) @db.Decimal(10, 2)
+
+  status        InvoiceStatus @default(DRAFT)
+  
+  items         InvoiceItem[]
+  payments      Payment[]
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  dueDate       DateTime?
+}
+
+model InvoiceItem {
+  id          String        @id @default(uuid())
+  invoice     Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoiceId   String
+  
+  item        InventoryItem? @relation(fields: [itemId], references: [id])
+  itemId      String?
+  description String?
+  
+  quantity    Int
+  unitPrice   Decimal       @db.Decimal(10, 2)
+  totalPrice  Decimal       @db.Decimal(10, 2)
+}
+
+model Payment {
+  id            String      @id @default(uuid())
+  invoice       Invoice     @relation(fields: [invoiceId], references: [id])
+  invoiceId     String
+  
+  amount        Decimal     @db.Decimal(10, 2)
+  mode          PaymentMode @default(CASH)
+  proofUrl      String?     // URL to uploaded image/pdf
+  referenceNo   String?     // Transaction ID
+  
+  collectedBy   User?       @relation(fields: [collectedById], references: [id])
+  collectedById String?
+
+  paymentDate   DateTime    @default(now())
+  createdAt     DateTime    @default(now())
+}
+
+model Attendance {
+  id          String    @id @default(uuid())
+  event       Event     @relation(fields: [eventId], references: [id])
+  eventId     String
+  employee    Employee  @relation(fields: [employeeId], references: [id])
+  employeeId  String
+  
+  checkIn     DateTime?
+  checkOut    DateTime?
+  isPresent   Boolean   @default(false)
+  verifiedBy  User?     @relation(fields: [verifiedById], references: [id])
+  verifiedById String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([eventId, employeeId])
+}
+
+enum WageStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  PAID
+}
+
+model Wage {
+  id          String    @id @default(uuid())
+  employee    Employee  @relation(fields: [employeeId], references: [id])
+  employeeId  String
+  event       Event?    @relation(fields: [eventId], references: [id])
+  eventId     String?   // Can be null if monthly salary or bonus
+  
+  job         Job?      @relation(fields: [jobId], references: [id])
+  jobId       String?
+
+  amount      Decimal   @db.Decimal(10, 2)
+  status      WageStatus @default(DRAFT)
+  isPaid      Boolean   @default(false)
+  paidAt      DateTime?
+  
+  description String?   // E.g. "Event Bonus", "Base Pay"
+  breakdown   String?   // JSON breakdown of calculation
+
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model MaintenanceLog {
+  id          String    @id @default(uuid())
+  item        InventoryItem @relation(fields: [itemId], references: [id])
+  itemId      String
+  
+  reportedBy  User?     @relation("ReportedBy", fields: [reportedById], references: [id])
+  reportedById String?
+  
+  description String
+  cost        Decimal   @default(0) @db.Decimal(10, 2)
+  status      ItemStatus @default(MAINTENANCE) // Status of item during this log
+  resolvedAt  DateTime?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  user        User?    @relation(fields: [userId], references: [id])
+  userId      String?
+  action      String   // E.g. "CREATED_INVOICE", "DELETED_ITEM"
+  details     String?  // JSON details of change
+  ipAddress   String?
+
+  createdAt   DateTime @default(now())
+}
+
+model CompanyProfile {
+  id                String   @id @default(uuid())
+  companyName       String
+  address           String?
+  city              String?
+  state             String?
+  postalCode        String?
+  country           String?
+  website           String?
+  supportEmail      String?
+  regNumber         String?
+  taxId             String?
+  phone             String?
+  email             String?
+  gstNumber         String?
+  logoUrl           String?
+  invoiceFooterNote String?
+  
+  paymentProfile    PaymentProfile?
+  systemSettings    SystemSettings?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model PaymentProfile {
+  id              String   @id @default(uuid())
+  companyId       String   @unique
+  company         CompanyProfile @relation(fields: [companyId], references: [id])
+  
+  upiId           String?
+  bankName        String?
+  accountNumber   String?
+  ifscCode        String?
+  gpayQrUrl       String?
+  phonepeQrUrl    String?
+  paymentTerms    String?
+  accountName     String?
+  branch          String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model SystemSettings {
+  id              String   @id @default(uuid())
+  companyId       String   @unique
+  company         CompanyProfile @relation(fields: [companyId], references: [id])
+  
+  currency        String   @default("INR")
+  timezone        String   @default("Asia/Kolkata")
+  dateFormat      String   @default("DD/MM/YYYY")
+  
+  workingDayStart String   @default("09:00")
+  workingDayEnd   String   @default("18:00")
+  
+  overtimeEnabled Boolean  @default(true)
+  overtimeThreshold Int    @default(8) // Hours
+  
+  attendanceGracePeriod Int @default(15) // Minutes
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+enum WageType {
+  PIECE_RATE
+  DAILY_WAGE
+  HOURLY_WAGE
+  FIXED_JOB_RATE
+}
+
+model WagePolicy {
+  id          String   @id @default(uuid())
+  type        WageType @unique
+  isActive    Boolean  @default(true)
+  description String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model EmployeeWageRate {
+  id          String   @id @default(uuid())
+  employeeId  String?
+  employee    Employee? @relation(fields: [employeeId], references: [id])
+  
+  role        Role? 
+
+  wageType    WageType
+  itemId      String?
+  item        InventoryItem? @relation("WageItem", fields: [itemId], references: [id])
+  
+  rate        Decimal  @db.Decimal(10, 2)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ItemPieceRate {
+   id          String        @id @default(uuid())
+   itemId      String        @unique
+   item        InventoryItem @relation(fields: [itemId], references: [id])
+   ratePerUnit Decimal       @db.Decimal(10, 2)
+   
+   createdAt   DateTime      @default(now())
+   updatedAt   DateTime      @updatedAt
+}
+
+model GlobalRoleRate {
+  id          String   @id @default(uuid())
+  roleName    String
+  wageType    WageType // DAILY_WAGE, FIXED_JOB_RATE
+  rate        Decimal  @db.Decimal(10, 2)
+  description String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([roleName, wageType])
+}
+
+model JobCostLedger {
+  id             String   @id @default(uuid())
+  eventId        String   @unique
+  event          Event    @relation(fields: [eventId], references: [id])
+  
+  inventoryCost  Decimal  @default(0) @db.Decimal(10, 2)
+  employeeWageCost Decimal @default(0) @db.Decimal(10, 2)
+  transportCost  Decimal  @default(0) @db.Decimal(10, 2)
+  miscCost       Decimal  @default(0) @db.Decimal(10, 2)
+  totalCost      Decimal  @default(0) @db.Decimal(10, 2)
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+enum JobStatus {
+  PENDING
+  PLANNED
+  CONFIRMED
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+model Job {
+  id          String    @id @default(uuid())
+  title       String
+  date        String    // YYYY-MM-DD format
+  duration    String
+  location    String
+  client      String
+  description String?
+  status      JobStatus @default(PENDING)
+  color       String    @default("bg-blue-600/20 text-blue-400 border-blue-600/30")
+  requiredWorkers Int       @default(1)
+  
+  checkouts   CheckoutLog[]
+  invoice     Invoice?
+  requests    JobRequest[]
+  wages       Wage[]
+  expenses    JobExpense[]
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  messages    JobMessage[]
+}
+
+model JobRequest {
+  id              String   @id @default(uuid())
+  jobId           String
+  job             Job      @relation(fields: [jobId], references: [id])
+  employeeId      String
+  employee        Employee @relation(fields: [employeeId], references: [id])
+  
+  status          String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  rejectionReason String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([jobId, employeeId])
+}
+
+enum CheckoutStatus {
+  CHECKED_OUT
+  RETURNED
+  LOST
+}
+
+model CheckoutLog {
+  id           String        @id @default(uuid())
+  jobId        String
+  job          Job           @relation(fields: [jobId], references: [id])
+  itemId       String
+  item         InventoryItem @relation(fields: [itemId], references: [id])
+  assignedToId String?
+  assignedTo   Employee?     @relation(fields: [assignedToId], references: [id])
+  
+  checkedOutAt DateTime      @default(now())
+  checkedInAt  DateTime?
+  status       CheckoutStatus @default(CHECKED_OUT)
+  quantity     Int           @default(1)
+  
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+enum ExpenseCategory {
+  TRANSPORT
+  FOOD
+  FUEL
+  EQUIPMENT_RENTAL
+  MISC
+}
+
+model JobExpense {
+  id          String   @id @default(uuid())
+  job         Job      @relation(fields: [jobId], references: [id])
+  jobId       String
+
+  title       String
+  amount      Decimal  @db.Decimal(10, 2)
+  category    ExpenseCategory @default(MISC)
+  description String?
+  proofUrl    String?
+
+  recordedBy   User?     @relation(fields: [recordedById], references: [id])
+  recordedById String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+model JobMessage {
+  id        String   @id @default(uuid())
+  content   String
+  imageUrl  String?
+  
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

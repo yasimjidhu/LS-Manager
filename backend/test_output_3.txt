@@ -1,0 +1,79 @@
+﻿
+> backend@0.0.1 test
+> jest src/modules/wages/wages.service.spec.ts
+
+node.exe : FAIL src/modules/
+wages/wages.service.spec.ts
+At C:\Users\dirsh\AppData\Ro
+aming\npm\npm.ps1:24 char:5
++     & "node$exe"  "$basedi
+r/node_modules/npm/bin/npm-c
+li.js" $args
++     ~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~
+    + CategoryInfo          
+    : NotSpecified: (FAIL   
+  src/module...service.sp   
+ ec.ts:String) [], Remot    
+eException
+    + FullyQualifiedErrorId 
+    : NativeCommandError
+ 
+  WagesService
+    ΓêÜ should be defined 
+(17 ms)
+    ├ù should calculate 
+shared piece rate pool 
+correctly (8 ms)
+
+  ΓùÅ WagesService ΓÇ║ 
+should calculate shared 
+piece rate pool correctly
+
+    TypeError: this.notifica
+tionsService.notifyRole is 
+not a function
+
+    [0m [90m 197 |[39m   
+      }
+     [90m 198 |[39m
+    
+[31m[1m>[22m[39m[90m 
+199 |[39m         
+[36mawait[39m [36mthis[3
+9m[33m.[39mnotificationsSe
+rvice[33m.[39mnotifyRole(
+     [90m     |[39m       
+                            
+      [31m[1m^[22m[39m
+     [90m 200 |[39m       
+      [[32m'ADMIN'[39m][3
+3m,[39m
+     [90m 201 |[39m       
+      [32m'Wages 
+Calculated'[39m[33m,[39m
+     [90m 202 |[39m       
+      [32m`Wages for 
+${employees.length} 
+employees have been 
+calculated for job "${job.ti
+tle}".`[39m[33m,[39m[0m
+
+      at WagesService.calcul
+ateForJob (modules/wages/wag
+es.service.ts:199:41)
+      at Object.<anonymous> 
+(modules/wages/wages.service
+.spec.ts:87:9)
+
+Test Suites: 1 failed, 1 
+total
+Tests:       1 failed, 1 
+passed, 2 total
+Snapshots:   0 total
+Time:        1.688 s, 
+estimated 2 s
+Ran all test suites 
+matching src/modules/wages/w
+ages.service.spec.ts.

@@ -1,0 +1,95 @@
+﻿
+> backend@0.0.1 test
+> jest src/modules/wages/wages.service.spec.ts
+
+node.exe : FAIL src/modules/
+wages/wages.service.spec.ts
+At C:\Users\dirsh\AppData\Ro
+aming\npm\npm.ps1:24 char:5
++     & "node$exe"  "$basedi
+r/node_modules/npm/bin/npm-c
+li.js" $args
++     ~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~
+    + CategoryInfo          
+    : NotSpecified: (FAIL   
+  src/module...service.sp   
+ ec.ts:String) [], Remot    
+eException
+    + FullyQualifiedErrorId 
+    : NativeCommandError
+ 
+  WagesService
+    ΓêÜ should be defined 
+(14 ms)
+    ├ù should calculate 
+shared piece rate pool 
+correctly (5 ms)
+
+  ΓùÅ WagesService ΓÇ║ 
+should calculate shared 
+piece rate pool correctly
+
+    TypeError: Cannot read 
+properties of undefined 
+(reading 'some')
+
+    [0m [90m  97 |[39m   
+      [90m// 2. Count 
+eligible piece rate workers 
+(excluding those with 
+FIXED_JOB_RATE 
+override)[39m
+     [90m  98 |[39m       
+  [36mconst[39m 
+pieceRateWorkers 
+[33m=[39m employees[33m.
+[39mfilter(emp [33m=>[39m 
+{
+    
+[31m[1m>[22m[39m[90m  
+99 |[39m             
+[36mconst[39m 
+hasFixedJobRate [33m=[39m 
+emp[33m.[39mwageRates[33m
+.[39msome(r [33m=>[39m 
+r[33m.[39mwageType 
+[33m===[39m [32m'FIXED_JO
+B_RATE'[39m)[33m;[39m
+     [90m     |[39m       
+                            
+                
+[31m[1m^[22m[39m
+     [90m 100 |[39m       
+      [36mreturn[39m 
+[33m![39mhasFixedJobRate 
+[33m&&[39m 
+emp[33m.[39mwageModel 
+[33m===[39m [32m'PIECE_RA
+TE'[39m[33m;[39m
+     [90m 101 |[39m       
+  })[33m;[39m
+     [90m 102 |[39m[0m
+
+      at modules/wages/wages
+.service.ts:99:51
+          at Array.filter 
+(<anonymous>)
+      at WagesService.calcul
+ateForJob (modules/wages/wag
+es.service.ts:98:44)
+      at Object.<anonymous> 
+(modules/wages/wages.service
+.spec.ts:87:9)
+
+Test Suites: 1 failed, 1 
+total
+Tests:       1 failed, 1 
+passed, 2 total
+Snapshots:   0 total
+Time:        1.544 s, 
+estimated 2 s
+Ran all test suites 
+matching src/modules/wages/w
+ages.service.spec.ts.

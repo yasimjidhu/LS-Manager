@@ -1,0 +1,39 @@
+﻿
+> backend@0.0.1 test
+> jest src/modules/wages/wages.service.spec.ts
+
+node.exe : PASS src/modules/
+wages/wages.service.spec.ts
+At C:\Users\dirsh\AppData\Ro
+aming\npm\npm.ps1:24 char:5
++     & "node$exe"  "$basedi
+r/node_modules/npm/bin/npm-c
+li.js" $args
++     ~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~
+    + CategoryInfo          
+    : NotSpecified: (PASS   
+  src/module...service.sp   
+ ec.ts:String) [], Remot    
+eException
+    + FullyQualifiedErrorId 
+    : NativeCommandError
+ 
+  WagesService
+    ΓêÜ should be defined 
+(17 ms)
+    ΓêÜ should calculate 
+shared piece rate pool 
+correctly (8 ms)
+
+Test Suites: 1 passed, 1 
+total
+Tests:       2 passed, 2 
+total
+Snapshots:   0 total
+Time:        1.455 s, 
+estimated 2 s
+Ran all test suites 
+matching src/modules/wages/w
+ages.service.spec.ts.
