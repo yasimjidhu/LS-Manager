@@ -294,7 +294,7 @@ const CreateQuotation = () => {
                         </div>
 
                         <div className="space-y-4">
-                            {items.map((item, index) => (
+                            {items.map((item) => (
                                 <div key={item.id} className="grid grid-cols-12 gap-3 items-start animate-in slide-in-from-left-4 duration-300">
                                     <div className="col-span-12 md:col-span-5">
                                         <label className="block text-[10px] text-gray-500 mb-1 uppercase font-bold">Item Details</label>
