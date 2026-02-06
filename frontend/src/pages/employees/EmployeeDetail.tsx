@@ -174,15 +174,17 @@ const EmployeeDetail = () => {
                         {activeTab === 'jobs' && (
                             <div>
                                 {(() => {
+                                    // Safely accessing properties that might be missing on the type but present in API response
+                                    const anyEmployee = employee as any;
                                     const jobHistory = [
-                                        ...(employee.assignments || []).map((a: any) => ({
+                                        ...(anyEmployee.assignments || []).map((a: any) => ({
                                             id: a.id,
                                             title: a.event?.name || 'Event Assignment',
                                             role: a.role || 'Staff',
                                             date: a.createdAt,
                                             type: 'Event'
                                         })),
-                                        ...(employee.jobRequests || []).map((req: any) => ({
+                                        ...(anyEmployee.jobRequests || []).map((req: any) => ({
                                             id: req.id,
                                             title: req.job?.title || 'Job Assignment',
                                             role: 'Assigned Worker',
@@ -224,9 +226,9 @@ const EmployeeDetail = () => {
                         {/* Attendance Tab */}
                         {activeTab === 'attendance' && (
                             <div>
-                                {employee.attendance && employee.attendance.length > 0 ? (
+                                {((employee as any).attendance && (employee as any).attendance.length > 0) ? (
                                     <div className="space-y-3">
-                                        {employee.attendance.map((record: any) => (
+                                        {(employee as any).attendance.map((record: any) => (
                                             <div key={record.id} className="bg-[#0B0E14] border border-[#1F2937] rounded-lg p-4 flex items-center justify-between">
                                                 <div>
                                                     <p className="text-white font-medium">{new Date(record.date).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
@@ -252,9 +254,9 @@ const EmployeeDetail = () => {
                         {/* Wages Tab */}
                         {activeTab === 'wages' && (
                             <div>
-                                {employee.wages && employee.wages.length > 0 ? (
+                                {((employee as any).wages && (employee as any).wages.length > 0) ? (
                                     <div className="space-y-3">
-                                        {employee.wages.map((wage: any) => (
+                                        {(employee as any).wages.map((wage: any) => (
                                             <div key={wage.id} className="bg-[#0B0E14] border border-[#1F2937] rounded-lg p-4 flex items-center justify-between">
                                                 <div>
                                                     <p className="text-white font-medium">₹{Number(wage.amount).toFixed(2)}</p>

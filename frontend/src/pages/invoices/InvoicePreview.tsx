@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Printer, ArrowLeft, CheckCircle, XCircle, Send } from 'lucide-react';
+import { Printer, ArrowLeft, Send } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
 import { invoiceApi } from '../../services/invoice.service';
 import { settingsApi } from '../../services/settings.service';
@@ -35,7 +35,7 @@ const InvoicePreview = () => {
     });
 
     const handlePrint = useReactToPrint({
-        content: () => componentRef.current,
+        contentRef: componentRef,
         documentTitle: `Receipt-${invoiceRaw?.itemOrder || id}`,
     });
 
@@ -60,8 +60,8 @@ const InvoicePreview = () => {
 
     const client = {
         name: invoiceRaw.clientName || invoiceRaw.job?.client || 'Valued Client',
-        phone: invoiceRaw.clientPhone || invoiceRaw.job?.clientPhone || '',
-        email: invoiceRaw.clientEmail || '',
+        phone: (invoiceRaw as any).clientPhone || invoiceRaw.job?.clientPhone || '',
+        email: (invoiceRaw as any).clientEmail || '',
         event: invoiceRaw.job?.eventType || 'Service',
         location: invoiceRaw.job?.location || '',
     };
@@ -81,7 +81,7 @@ const InvoicePreview = () => {
     const subtotal = Number(invoiceRaw.subtotal || 0);
     const total = Number(invoiceRaw.totalAmount || 0);
     const receiptNo = invoiceRaw.itemOrder || 'DRAFT';
-    const receiptDate = fmtDate(invoiceRaw.createdAt);
+    const receiptDate = fmtDate(invoiceRaw.createdAt || new Date().toISOString());
     const status = (invoiceRaw.status || 'DRAFT').replace('_', ' ');
 
     // ─── Render ──────────────────────────────────────────────────────────
@@ -90,13 +90,13 @@ const InvoicePreview = () => {
 
             {/* ── Top Action Bar ── */}
             <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between print:hidden shadow-sm">
-                <button 
-                    onClick={() => navigate('/invoices')} 
+                <button
+                    onClick={() => navigate('/invoices')}
                     className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors text-sm font-medium"
                 >
                     <ArrowLeft className="w-4 h-4" /> Back to Receipts
                 </button>
-                <button 
+                <button
                     onClick={handlePrint}
                     className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 >
@@ -120,9 +120,9 @@ const InvoicePreview = () => {
                             <div className="w-2/5">
                                 {co.logo ? (
                                     <div className="mb-3">
-                                        <img 
-                                            src={co.logo} 
-                                            alt="Company Logo" 
+                                        <img
+                                            src={co.logo}
+                                            alt="Company Logo"
                                             className="h-12 w-auto object-contain"
                                         />
                                     </div>
@@ -134,7 +134,7 @@ const InvoicePreview = () => {
                                         <h1 className="text-xl font-bold text-gray-900">{co.name}</h1>
                                     </div>
                                 )}
-                                
+
                                 <div className="space-y-1 text-xs text-gray-600">
                                     {co.address && <div className="flex items-start">
                                         <span className="w-16 text-gray-500">Address:</span>
@@ -328,7 +328,7 @@ const InvoicePreview = () => {
 
                 <div className="flex items-center gap-3">
                     {(!invoiceRaw.status || invoiceRaw.status === 'DRAFT') && (
-                        <button 
+                        <button
                             onClick={() => updateStatusMutation.mutate('PENDING_APPROVAL')}
                             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                         >
@@ -337,13 +337,13 @@ const InvoicePreview = () => {
                     )}
                     {invoiceRaw.status === 'PENDING_APPROVAL' && (
                         <>
-                            <button 
+                            <button
                                 onClick={() => updateStatusMutation.mutate('DRAFT')}
                                 className="px-4 py-2 border border-red-300 text-red-700 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors"
                             >
                                 Reject
                             </button>
-                            <button 
+                            <button
                                 onClick={() => updateStatusMutation.mutate('APPROVED')}
                                 className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
                             >
