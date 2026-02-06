@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { Search, Plus, Download, Eye, ChevronDown, CheckCircle2, Clock, PieChart, DollarSign, X, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Plus, Download, Eye, ChevronDown, CheckCircle2, Clock, PieChart, DollarSign, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
+
 import { invoiceApi } from '../../services/invoice.service';
-import { JobsService } from '../../services/jobs.service';
-import { cn } from '../../lib/utils';
 
 const StatCard = ({ title, value, icon: Icon, colorClass }: { title: string, value: string, icon: any, colorClass: string }) => (
     <div className="bg-[#1A1F28] border border-[#2A3441] rounded-xl p-5 flex flex-col gap-3 min-h-[140px] hover:border-gray-500 transition-all">
