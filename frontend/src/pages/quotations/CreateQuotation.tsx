@@ -1,11 +1,11 @@
 
 import { useState, useEffect } from 'react';
+
 import { ArrowLeft, Calendar, MapPin, Plus, Save, Send, Trash2, ChevronDown, AlertCircle } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { quotationApi } from '../../services/quotation.service';
 import { inventoryApi } from '../../services/inventory.service';
-import { cn } from '../../lib/utils'; // Keep assuming this path is correct
 
 const CreateQuotation = () => {
     const navigate = useNavigate();
