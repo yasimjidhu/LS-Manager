@@ -11,6 +11,7 @@ export interface InventoryItem {
     categoryId: string;
     category?: { id: string; name: string };
     checkedOutQuantity?: number;
+    imageUrl?: string;
     model?: string; // Add this if you add model to backend
 }
 
@@ -40,13 +41,15 @@ export const inventoryApi = {
         return data;
     },
 
-    create: async (item: Partial<InventoryItem>) => {
-        const { data } = await api.post<InventoryItem>('/inventory', item);
+    create: async (item: Partial<InventoryItem> | FormData) => {
+        const headers = item instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : {};
+        const { data } = await api.post<InventoryItem>('/inventory', item, { headers });
         return data;
     },
 
-    update: async (id: string, item: Partial<InventoryItem>) => {
-        const { data } = await api.patch<InventoryItem>(`/inventory/${id}`, item);
+    update: async (id: string, item: Partial<InventoryItem> | FormData) => {
+        const headers = item instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : {};
+        const { data } = await api.patch<InventoryItem>(`/inventory/${id}`, item, { headers });
         return data;
     },
 
@@ -71,6 +74,16 @@ export const inventoryApi = {
 
     getConflicts: async () => {
         const { data } = await api.get<any[]>('/inventory/conflicts');
+        return data;
+    },
+
+    checkout: async (payload: { itemId: string; jobId: string; quantity: number, assignedToId?: string }) => {
+        const { data } = await api.post('/inventory/checkout', payload);
+        return data;
+    },
+
+    checkIn: async (payload: { itemId: string; jobId: string; quantity: number, assignedToId?: string, qrCode?: string }) => {
+        const { data } = await api.post('/inventory/checkin', payload);
         return data;
     }
 };

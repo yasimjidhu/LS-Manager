@@ -3,9 +3,11 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Package, Plus, Tag, Loader2, AlertCircle } from 'lucide-react';
 import { inventoryApi } from '../../../services/inventory.service';
+import { useAlert } from '../../../components/ui/AlertProvider';
 
 const InventorySettings = () => {
     const queryClient = useQueryClient();
+    const { success, error } = useAlert();
     const [newCategoryName, setNewCategoryName] = useState('');
     const [isAdding, setIsAdding] = useState(false);
 
@@ -20,9 +22,10 @@ const InventorySettings = () => {
             queryClient.invalidateQueries({ queryKey: ['categories'] });
             setNewCategoryName('');
             setIsAdding(false);
+            success('Success', 'Category created successfully');
         },
         onError: (err: any) => {
-            alert(err?.response?.data?.message || 'Failed to create category');
+            error('Error', err?.response?.data?.message || 'Failed to create category');
         }
     });
 

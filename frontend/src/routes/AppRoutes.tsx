@@ -10,6 +10,7 @@ import Settings from '../pages/settings/Settings';
 import Inventory from '../pages/inventory/Inventory';
 import Jobs from '../pages/jobs/Jobs';
 import Checkout from '../pages/checkout/Checkout';
+import CheckIn from '../pages/checkin/CheckIn';
 import Quotations from '../pages/quotations/Quotations';
 import CreateQuotation from '../pages/quotations/CreateQuotation';
 import Invoices from '../pages/invoices/Invoices';
@@ -21,6 +22,7 @@ import Employees from '../pages/employees/Employees';
 import CreateEmployee from '../pages/employees/CreateEmployee';
 import EmployeeDetail from '../pages/employees/EmployeeDetail';
 import EditEmployee from '../pages/employees/EditEmployee';
+import Maintenance from '../pages/maintenance/Maintenance';
 
 import RoleRoute from './RoleRoute';
 
@@ -55,12 +57,14 @@ const AppRoutes = () => {
                         <Route path="invoices" element={<Invoices />} />
                         <Route path="invoices/new" element={<CreateInvoice />} />
                         <Route path="invoices/:id" element={<InvoicePreview />} />
+                        <Route path="maintenance" element={<Maintenance />} />
                     </Route>
 
                     {/* Admin, Supervisor & Employee Routes */}
                     <Route element={<RoleRoute allowedRoles={['ADMIN', 'SUPERVISOR', 'EMPLOYEE']} />}>
                         <Route path="inventory" element={<Inventory />} />
                         <Route path="checkout" element={<Checkout />} />
+                        <Route path="checkin" element={<CheckIn />} />
                         <Route path="wages" element={<Wages />} />
                         <Route path="jobs" element={<Jobs />} />
                     </Route>

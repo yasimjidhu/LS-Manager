@@ -1,4 +1,4 @@
-import { Search, Bell, ScanLine, X, Info, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Search, Bell, X, Info, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../store';
 import { useState, useRef, useEffect } from 'react';
@@ -78,11 +78,7 @@ const Navbar = () => {
 
             {/* Right Section */}
             <div className="flex items-center gap-6">
-                {/* Quick Scan Button */}
-                <button className="hidden md:flex h-10 px-5 bg-cyan-500 hover:bg-cyan-400 text-black font-semibold rounded-lg items-center gap-2 transition-colors shadow-lg shadow-cyan-500/20">
-                    <ScanLine className="w-4 h-4" />
-                    Quick Scan
-                </button>
+
 
                 {/* Notifications */}
                 <div className="relative" ref={dropdownRef}>

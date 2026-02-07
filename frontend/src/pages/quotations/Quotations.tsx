@@ -4,6 +4,7 @@ import { Search, Plus, FileText, CheckCircle2, Send, DollarSign, Eye, PenSquare,
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { type Quotation, quotationApi } from '../../services/quotation.service';
+import { StatCardSkeleton, TableSkeleton } from '../../components/ui';
 import QuotationPreviewModal from './components/QuotationPreviewModal';
 
 const StatCard = ({ title, value, icon: Icon, colorClass }: { title: string, value: string, icon: any, colorClass: string }) => (
@@ -22,7 +23,7 @@ const StatCard = ({ title, value, icon: Icon, colorClass }: { title: string, val
 const Quotations = () => {
     const [search, setSearch] = useState('');
     const [selectedQuotation, setSelectedQuotation] = useState<Quotation | null>(null);
-    const { data: quotations } = useQuery({
+    const { data: quotations, isLoading } = useQuery({
         queryKey: ['quotations'],
         queryFn: quotationApi.getAll
     });
@@ -55,10 +56,21 @@ const Quotations = () => {
 
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard title="Draft" value="1" icon={FileText} colorClass="bg-gray-500" />
-                <StatCard title="Sent" value="1" icon={Send} colorClass="bg-blue-500" />
-                <StatCard title="Approved" value="1" icon={CheckCircle2} colorClass="bg-emerald-500" />
-                <StatCard title="Total Value" value="$69,600" icon={DollarSign} colorClass="bg-purple-500" />
+                {isLoading ? (
+                    <>
+                        <StatCardSkeleton />
+                        <StatCardSkeleton />
+                        <StatCardSkeleton />
+                        <StatCardSkeleton />
+                    </>
+                ) : (
+                    <>
+                        <StatCard title="Draft" value="1" icon={FileText} colorClass="bg-gray-500" />
+                        <StatCard title="Sent" value="1" icon={Send} colorClass="bg-blue-500" />
+                        <StatCard title="Approved" value="1" icon={CheckCircle2} colorClass="bg-emerald-500" />
+                        <StatCard title="Total Value" value="$69,600" icon={DollarSign} colorClass="bg-purple-500" />
+                    </>
+                )}
             </div>
 
             {/* Filters & Search */}
@@ -81,55 +93,64 @@ const Quotations = () => {
             {/* Table */}
             <div className="bg-[#151A21] border border-[#1F2937] rounded-2xl overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm text-gray-400">
-                        <thead className="bg-[#0B0E14] text-xs uppercase font-medium text-gray-500 border-b border-[#1F2937]">
-                            <tr>
-                                <th className="px-6 py-4">Quote ID</th>
-                                <th className="px-6 py-4">Client</th>
-                                <th className="px-6 py-4">Event</th>
-                                <th className="px-6 py-4">Date</th>
-                                <th className="px-6 py-4">Valid Until</th>
-                                <th className="px-6 py-4">Amount</th>
-                                <th className="px-6 py-4 text-center">Status</th>
-                                <th className="px-6 py-4 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[#1F2937]">
-                            {quotations?.map((quote) => (
-                                <tr key={quote.id} className="hover:bg-[#1F2937]/30 transition-colors">
-                                    <td className="px-6 py-4 text-white font-semibold">{quote.id.slice(0, 8)}...</td>
-                                    <td className="px-6 py-4 text-gray-300">{quote.clientName}</td>
-                                    <td className="px-6 py-4 text-gray-300">{quote.event?.name}</td>
-                                    <td className="px-6 py-4">{new Date(quote.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
-                                    <td className="px-6 py-4">{quote.validUntil ? new Date(quote.validUntil).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-'}</td>
-                                    <td className="px-6 py-4 text-white font-semibold">${quote.totalAmount.toLocaleString()}</td>
-                                    <td className="px-6 py-4 text-center">
-                                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wide ${getStatusColor(quote.status)}`}>
-                                            {quote.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex justify-end gap-2">
-                                            <button
-                                                onClick={() => setSelectedQuotation(quote)}
-                                                className="p-2 hover:bg-[#1F2937] rounded-lg text-gray-400 hover:text-white transition-colors"
-                                                title="View & Print"
-                                            >
-                                                <Eye className="w-4 h-4" />
-                                            </button>
-                                            <Link
-                                                to={`/quotations/${quote.id}/edit`}
-                                                className="p-2 hover:bg-[#1F2937] rounded-lg text-gray-400 hover:text-white transition-colors"
-                                                title="Edit"
-                                            >
-                                                <PenSquare className="w-4 h-4" />
-                                            </Link>
-                                        </div>
-                                    </td>
+                    {isLoading ? (
+                        <TableSkeleton rows={8} cols={8} />
+                    ) : (
+                        <table className="w-full text-left text-sm text-gray-400">
+                            <thead className="bg-[#0B0E14] text-xs uppercase font-medium text-gray-500 border-b border-[#1F2937]">
+                                <tr>
+                                    <th className="px-6 py-4">Quote ID</th>
+                                    <th className="px-6 py-4">Client</th>
+                                    <th className="px-6 py-4">Event</th>
+                                    <th className="px-6 py-4">Date</th>
+                                    <th className="px-6 py-4">Valid Until</th>
+                                    <th className="px-6 py-4">Amount</th>
+                                    <th className="px-6 py-4 text-center">Status</th>
+                                    <th className="px-6 py-4 text-right">Actions</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-[#1F2937]">
+                                {quotations?.map((quote) => (
+                                    <tr key={quote.id} className="hover:bg-[#1F2937]/30 transition-colors">
+                                        <td className="px-6 py-4 text-white font-semibold">{quote.id.slice(0, 8)}...</td>
+                                        <td className="px-6 py-4 text-gray-300">{quote.clientName}</td>
+                                        <td className="px-6 py-4 text-gray-300">{quote.event?.name}</td>
+                                        <td className="px-6 py-4">{new Date(quote.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                                        <td className="px-6 py-4">{quote.validUntil ? new Date(quote.validUntil).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-'}</td>
+                                        <td className="px-6 py-4 text-white font-semibold">${quote.totalAmount.toLocaleString()}</td>
+                                        <td className="px-6 py-4 text-center">
+                                            <span className={`px-3 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wide ${getStatusColor(quote.status)}`}>
+                                                {quote.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex justify-end gap-2">
+                                                <button
+                                                    onClick={() => setSelectedQuotation(quote)}
+                                                    className="p-2 hover:bg-[#1F2937] rounded-lg text-gray-400 hover:text-white transition-colors"
+                                                    title="View & Print"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                </button>
+                                                <Link
+                                                    to={`/quotations/${quote.id}/edit`}
+                                                    className="p-2 hover:bg-[#1F2937] rounded-lg text-gray-400 hover:text-white transition-colors"
+                                                    title="Edit"
+                                                >
+                                                    <PenSquare className="w-4 h-4" />
+                                                </Link>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {(!quotations || quotations.length === 0) && (
+                                    <tr>
+                                        <td colSpan={8} className="px-6 py-8 text-center text-gray-500">No quotations found.</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    )}
                 </div>
             </div>
 

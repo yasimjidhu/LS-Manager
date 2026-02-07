@@ -3,11 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Save } from 'lucide-react';
 import { employeeApi } from '../../services/employee.service';
+import { useAlert } from '../../components/ui/AlertProvider';
 
 const EditEmployee = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const { success, error } = useAlert();
 
     const { data: employee, isLoading } = useQuery({
         queryKey: ['employee', id],
@@ -49,12 +51,12 @@ const EditEmployee = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['employees'] });
             queryClient.invalidateQueries({ queryKey: ['employee', id] });
-            alert('Employee updated successfully!');
+            success('Updated', 'Employee updated successfully!');
             navigate(`/employees/${id}`);
         },
         onError: (err: any) => {
             const errorMessage = err?.response?.data?.message || err?.message || 'Failed to update employee';
-            alert(`Error: ${errorMessage}`);
+            error('Update Error', errorMessage);
         }
     });
 

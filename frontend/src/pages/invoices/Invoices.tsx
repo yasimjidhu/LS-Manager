@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Search, Plus, Download, Eye, ChevronDown, CheckCircle2, Clock, PieChart, DollarSign, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { StatCardSkeleton, TableSkeleton } from '../../components/ui';
 
 import { invoiceApi } from '../../services/invoice.service';
 
@@ -76,10 +77,21 @@ const Invoices = () => {
 
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard title="Total Invoiced" value={`₹${totalInvoiced.toLocaleString()}`} icon={DollarSign} colorClass="bg-blue-500" />
-                <StatCard title="Total Paid" value={`₹${totalPaid.toLocaleString()}`} icon={CheckCircle2} colorClass="bg-emerald-500" />
-                <StatCard title="Pending" value={`₹${pendingAmount.toLocaleString()}`} icon={Clock} colorClass="bg-amber-500" />
-                <StatCard title="Drafts" value={draftCount.toString()} icon={PieChart} colorClass="bg-purple-500" />
+                {isLoading ? (
+                    <>
+                        <StatCardSkeleton />
+                        <StatCardSkeleton />
+                        <StatCardSkeleton />
+                        <StatCardSkeleton />
+                    </>
+                ) : (
+                    <>
+                        <StatCard title="Total Invoiced" value={`₹${totalInvoiced.toLocaleString()}`} icon={DollarSign} colorClass="bg-blue-500" />
+                        <StatCard title="Total Paid" value={`₹${totalPaid.toLocaleString()}`} icon={CheckCircle2} colorClass="bg-emerald-500" />
+                        <StatCard title="Pending" value={`₹${pendingAmount.toLocaleString()}`} icon={Clock} colorClass="bg-amber-500" />
+                        <StatCard title="Drafts" value={draftCount.toString()} icon={PieChart} colorClass="bg-purple-500" />
+                    </>
+                )}
             </div>
 
             {/* Filters & Search */}
@@ -101,63 +113,62 @@ const Invoices = () => {
 
             {/* Table */}
             <div className="bg-[#151A21] border border-[#1F2937] rounded-2xl overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm text-gray-400">
-                        <thead className="bg-[#0B0E14] text-xs uppercase font-medium text-gray-500 border-b border-[#1F2937]">
-                            <tr>
-                                <th className="px-6 py-4">Invoice ID</th>
-                                <th className="px-6 py-4">Client</th>
-                                <th className="px-6 py-4">Event</th>
-                                <th className="px-6 py-4">Due Date</th>
-                                <th className="px-6 py-4 text-right">Amount</th>
-                                <th className="px-6 py-4 text-center">Status</th>
-                                <th className="px-6 py-4 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[#1F2937]">
-                            {isLoading && (
+                {isLoading ? (
+                    <TableSkeleton rows={10} cols={7} />
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm text-gray-400">
+                            <thead className="bg-[#0B0E14] text-xs uppercase font-medium text-gray-500 border-b border-[#1F2937]">
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-8 text-center text-gray-500">Loading invoices...</td>
+                                    <th className="px-6 py-4">Invoice ID</th>
+                                    <th className="px-6 py-4">Client</th>
+                                    <th className="px-6 py-4">Event</th>
+                                    <th className="px-6 py-4">Due Date</th>
+                                    <th className="px-6 py-4 text-right">Amount</th>
+                                    <th className="px-6 py-4 text-center">Status</th>
+                                    <th className="px-6 py-4 text-right">Actions</th>
                                 </tr>
-                            )}
-                            {!isLoading && filteredInvoices.length === 0 && (
-                                <tr>
-                                    <td colSpan={7} className="px-6 py-8 text-center text-gray-500">No invoices found.</td>
-                                </tr>
-                            )}
-                            {filteredInvoices.map((inv: any) => (
-                                <tr key={inv.id} className="hover:bg-[#1F2937]/30 transition-colors">
-                                    <td className="px-6 py-4 text-white font-semibold flex items-center gap-2">
-                                        <span className="font-mono text-xs text-gray-500">
-                                            #{inv.itemOrder || inv.id.slice(0, 6)}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-gray-300">{inv.clientName}</td>
-                                    <td className="px-6 py-4 text-gray-300">{inv.job?.title || 'N/A'}</td>
-                                    <td className="px-6 py-4">{inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : '-'}</td>
-                                    <td className="px-6 py-4 text-right text-white font-semibold">₹{Number(inv.totalAmount).toLocaleString()}</td>
-                                    <td className="px-6 py-4 text-center">
-                                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wide ${getStatusStyles(inv.status)}`}>
-                                            {inv.status?.replace('_', ' ') || 'DRAFT'}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex justify-end gap-2">
-                                            <Link to={`/invoices/${inv.id}`}>
+                            </thead>
+                            <tbody className="divide-y divide-[#1F2937]">
+                                {filteredInvoices.length === 0 && (
+                                    <tr>
+                                        <td colSpan={7} className="px-6 py-8 text-center text-gray-500">No invoices found.</td>
+                                    </tr>
+                                )}
+                                {filteredInvoices.map((inv: any) => (
+                                    <tr key={inv.id} className="hover:bg-[#1F2937]/30 transition-colors">
+                                        <td className="px-6 py-4 text-white font-semibold flex items-center gap-2">
+                                            <span className="font-mono text-xs text-gray-500">
+                                                #{inv.itemOrder || inv.id.slice(0, 6)}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-300">{inv.clientName}</td>
+                                        <td className="px-6 py-4 text-gray-300">{inv.job?.title || 'N/A'}</td>
+                                        <td className="px-6 py-4">{inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : '-'}</td>
+                                        <td className="px-6 py-4 text-right text-white font-semibold">₹{Number(inv.totalAmount).toLocaleString()}</td>
+                                        <td className="px-6 py-4 text-center">
+                                            <span className={`px-3 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wide ${getStatusStyles(inv.status)}`}>
+                                                {inv.status?.replace('_', ' ') || 'DRAFT'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex justify-end gap-2">
+                                                <Link to={`/invoices/${inv.id}`}>
+                                                    <button className="p-2 hover:bg-[#1F2937] rounded-lg text-gray-400 hover:text-white transition-colors">
+                                                        <Eye className="w-4 h-4" />
+                                                    </button>
+                                                </Link>
                                                 <button className="p-2 hover:bg-[#1F2937] rounded-lg text-gray-400 hover:text-white transition-colors">
-                                                    <Eye className="w-4 h-4" />
+                                                    <Download className="w-4 h-4" />
                                                 </button>
-                                            </Link>
-                                            <button className="p-2 hover:bg-[#1F2937] rounded-lg text-gray-400 hover:text-white transition-colors">
-                                                <Download className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
 
             {/* Pagination Controls */}

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { StatCardSkeleton, Skeleton } from '../../components/ui';
 import {
     ClipboardCheck, Users, Package, AlertCircle, CheckCircle2,
     Clock, Calendar, MapPin, Phone, ChevronRight,
@@ -41,7 +42,7 @@ const SupervisorDashboard = () => {
     const [filterStatus, setFilterStatus] = useState<'all' | 'upcoming' | 'ongoing'>('all');
 
     // Mock data - replace with actual API calls
-    const { data: assignedJobs = [] } = useQuery({
+    const { data: assignedJobs = [], isLoading: jobsLoading } = useQuery({
         queryKey: ['supervisor-jobs'],
         queryFn: async () => {
             return [
@@ -85,7 +86,7 @@ const SupervisorDashboard = () => {
         }
     });
 
-    const { data: crewMembers = [] } = useQuery({
+    const { data: crewMembers = [], isLoading: crewLoading } = useQuery({
         queryKey: ['crew-members'],
         queryFn: async () => {
             return [
@@ -123,7 +124,7 @@ const SupervisorDashboard = () => {
         }
     });
 
-    const { data: pendingApprovals = [] } = useQuery({
+    const { data: pendingApprovals = [], isLoading: approvalsLoading } = useQuery({
         queryKey: ['pending-approvals'],
         queryFn: async () => {
             return [
@@ -203,47 +204,58 @@ const SupervisorDashboard = () => {
 
             {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-4">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-gray-400 text-sm">Active Jobs</span>
-                        <Briefcase className="w-5 h-5 text-orange-400" />
-                    </div>
-                    <div className="text-2xl font-bold text-white">
-                        {assignedJobs.filter(j => j.status === 'ongoing').length}
-                    </div>
-                    <div className="text-xs text-gray-400 mt-1">Currently ongoing</div>
-                </div>
+                {jobsLoading || crewLoading || approvalsLoading ? (
+                    <>
+                        <StatCardSkeleton />
+                        <StatCardSkeleton />
+                        <StatCardSkeleton />
+                        <StatCardSkeleton />
+                    </>
+                ) : (
+                    <>
+                        <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-4">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-gray-400 text-sm">Active Jobs</span>
+                                <Briefcase className="w-5 h-5 text-orange-400" />
+                            </div>
+                            <div className="text-2xl font-bold text-white">
+                                {assignedJobs.filter(j => j.status === 'ongoing').length}
+                            </div>
+                            <div className="text-xs text-gray-400 mt-1">Currently ongoing</div>
+                        </div>
 
-                <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-4">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-gray-400 text-sm">Upcoming Jobs</span>
-                        <Calendar className="w-5 h-5 text-blue-400" />
-                    </div>
-                    <div className="text-2xl font-bold text-white">
-                        {assignedJobs.filter(j => j.status === 'upcoming').length}
-                    </div>
-                    <div className="text-xs text-gray-400 mt-1">This week</div>
-                </div>
+                        <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-4">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-gray-400 text-sm">Upcoming Jobs</span>
+                                <Calendar className="w-5 h-5 text-blue-400" />
+                            </div>
+                            <div className="text-2xl font-bold text-white">
+                                {assignedJobs.filter(j => j.status === 'upcoming').length}
+                            </div>
+                            <div className="text-xs text-gray-400 mt-1">This week</div>
+                        </div>
 
-                <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-4">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-gray-400 text-sm">Available Crew</span>
-                        <Users className="w-5 h-5 text-green-400" />
-                    </div>
-                    <div className="text-2xl font-bold text-white">
-                        {crewMembers.filter(c => c.status === 'available').length}
-                    </div>
-                    <div className="text-xs text-gray-400 mt-1">Ready to assign</div>
-                </div>
+                        <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-4">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-gray-400 text-sm">Available Crew</span>
+                                <Users className="w-5 h-5 text-green-400" />
+                            </div>
+                            <div className="text-2xl font-bold text-white">
+                                {crewMembers.filter(c => c.status === 'available').length}
+                            </div>
+                            <div className="text-xs text-gray-400 mt-1">Ready to assign</div>
+                        </div>
 
-                <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-4">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-gray-400 text-sm">Pending Approvals</span>
-                        <AlertCircle className="w-5 h-5 text-yellow-400" />
-                    </div>
-                    <div className="text-2xl font-bold text-white">{pendingApprovals.length}</div>
-                    <div className="text-xs text-yellow-400 mt-1">Needs attention</div>
-                </div>
+                        <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-4">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-gray-400 text-sm">Pending Approvals</span>
+                                <AlertCircle className="w-5 h-5 text-yellow-400" />
+                            </div>
+                            <div className="text-2xl font-bold text-white">{pendingApprovals.length}</div>
+                            <div className="text-xs text-yellow-400 mt-1">Needs attention</div>
+                        </div>
+                    </>
+                )}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -285,59 +297,67 @@ const SupervisorDashboard = () => {
                         </div>
 
                         <div className="space-y-4">
-                            {filteredJobs.map((job) => (
-                                <div
-                                    key={job.id}
-                                    className="bg-[#0B0E14] border border-[#1F2937] rounded-lg p-4 hover:border-orange-600/50 transition-all cursor-pointer group"
-                                >
-                                    <div className="flex items-start justify-between mb-3">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <h3 className="text-white font-semibold group-hover:text-orange-400 transition-colors">
-                                                    {job.title}
-                                                </h3>
-                                                <span className={`px-2 py-0.5 rounded-full text-xs border ${getStatusColor(job.status)}`}>
-                                                    {job.status}
-                                                </span>
+                            {jobsLoading ? (
+                                <>
+                                    <Skeleton className="h-32 w-full" />
+                                    <Skeleton className="h-32 w-full" />
+                                    <Skeleton className="h-32 w-full" />
+                                </>
+                            ) : (
+                                filteredJobs.map((job) => (
+                                    <div
+                                        key={job.id}
+                                        className="bg-[#0B0E14] border border-[#1F2937] rounded-lg p-4 hover:border-orange-600/50 transition-all cursor-pointer group"
+                                    >
+                                        <div className="flex items-start justify-between mb-3">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <h3 className="text-white font-semibold group-hover:text-orange-400 transition-colors">
+                                                        {job.title}
+                                                    </h3>
+                                                    <span className={`px-2 py-0.5 rounded-full text-xs border ${getStatusColor(job.status)}`}>
+                                                        {job.status}
+                                                    </span>
+                                                </div>
+                                                <p className="text-gray-400 text-sm">{job.client}</p>
                                             </div>
-                                            <p className="text-gray-400 text-sm">{job.client}</p>
+                                            <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-orange-400 transition-colors" />
                                         </div>
-                                        <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-orange-400 transition-colors" />
-                                    </div>
 
-                                    <div className="grid grid-cols-2 gap-3 mb-3">
-                                        <div className="flex items-center gap-2 text-sm text-gray-400">
-                                            <Calendar className="w-4 h-4" />
-                                            <span>{new Date(job.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                        <div className="grid grid-cols-2 gap-3 mb-3">
+                                            <div className="flex items-center gap-2 text-sm text-gray-400">
+                                                <Calendar className="w-4 h-4" />
+                                                <span>{new Date(job.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-sm text-gray-400">
+                                                <Clock className="w-4 h-4" />
+                                                <span>{job.time}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-sm text-gray-400">
+                                                <MapPin className="w-4 h-4" />
+                                                <span className="truncate">{job.location}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-sm text-gray-400">
+                                                <Users className="w-4 h-4" />
+                                                <span>{job.assignedCrew} crew members</span>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-2 text-sm text-gray-400">
-                                            <Clock className="w-4 h-4" />
-                                            <span>{job.time}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-sm text-gray-400">
-                                            <MapPin className="w-4 h-4" />
-                                            <span className="truncate">{job.location}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-sm text-gray-400">
-                                            <Users className="w-4 h-4" />
-                                            <span>{job.assignedCrew} crew members</span>
-                                        </div>
-                                    </div>
 
-                                    <div className="pt-3 border-t border-[#1F2937]">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className="text-xs text-gray-400">Checklist Progress</span>
-                                            <span className="text-xs font-semibold text-white">{job.checklistProgress}%</span>
-                                        </div>
-                                        <div className="w-full bg-[#1F2937] rounded-full h-2">
-                                            <div
-                                                className="bg-gradient-to-r from-orange-600 to-red-600 h-2 rounded-full transition-all"
-                                                style={{ width: `${job.checklistProgress}%` }}
-                                            />
+                                        <div className="pt-3 border-t border-[#1F2937]">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="text-xs text-gray-400">Checklist Progress</span>
+                                                <span className="text-xs font-semibold text-white">{job.checklistProgress}%</span>
+                                            </div>
+                                            <div className="w-full bg-[#1F2937] rounded-full h-2">
+                                                <div
+                                                    className="bg-gradient-to-r from-orange-600 to-red-600 h-2 rounded-full transition-all"
+                                                    style={{ width: `${job.checklistProgress}%` }}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))
+                            )}
                         </div>
                     </div>
 
@@ -351,35 +371,42 @@ const SupervisorDashboard = () => {
                         </div>
 
                         <div className="space-y-3">
-                            {pendingApprovals.map((approval) => (
-                                <div
-                                    key={approval.id}
-                                    className="bg-[#0B0E14] border border-[#1F2937] rounded-lg p-4 hover:border-yellow-600/50 transition-all"
-                                >
-                                    <div className="flex items-start gap-3">
-                                        <div className="p-2 bg-yellow-600/20 rounded-lg border border-yellow-600/30">
-                                            {getApprovalIcon(approval.type)}
-                                        </div>
-                                        <div className="flex-1">
-                                            <div className="flex items-center justify-between mb-1">
-                                                <h4 className="text-white font-medium">{approval.employeeName}</h4>
-                                                <span className="text-xs text-gray-400">{approval.timestamp}</span>
+                            {approvalsLoading ? (
+                                <>
+                                    <Skeleton className="h-24 w-full" />
+                                    <Skeleton className="h-24 w-full" />
+                                </>
+                            ) : (
+                                pendingApprovals.map((approval) => (
+                                    <div
+                                        key={approval.id}
+                                        className="bg-[#0B0E14] border border-[#1F2937] rounded-lg p-4 hover:border-yellow-600/50 transition-all"
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <div className="p-2 bg-yellow-600/20 rounded-lg border border-yellow-600/30">
+                                                {getApprovalIcon(approval.type)}
                                             </div>
-                                            <p className="text-sm text-gray-400 mb-1">{approval.jobTitle}</p>
-                                            <p className="text-sm text-gray-300">{approval.details}</p>
-                                            <div className="flex gap-2 mt-3">
-                                                <button className="flex items-center gap-1 px-3 py-1.5 bg-green-600/20 text-green-400 border border-green-600/30 rounded-lg text-sm hover:bg-green-600/30 transition-all">
-                                                    <CheckCircle2 className="w-4 h-4" />
-                                                    Approve
-                                                </button>
-                                                <button className="px-3 py-1.5 bg-[#1F2937] text-gray-400 rounded-lg text-sm hover:bg-[#2A3441] transition-all">
-                                                    Review
-                                                </button>
+                                            <div className="flex-1">
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <h4 className="text-white font-medium">{approval.employeeName}</h4>
+                                                    <span className="text-xs text-gray-400">{approval.timestamp}</span>
+                                                </div>
+                                                <p className="text-sm text-gray-400 mb-1">{approval.jobTitle}</p>
+                                                <p className="text-sm text-gray-300">{approval.details}</p>
+                                                <div className="flex gap-2 mt-3">
+                                                    <button className="flex items-center gap-1 px-3 py-1.5 bg-green-600/20 text-green-400 border border-green-600/30 rounded-lg text-sm hover:bg-green-600/30 transition-all">
+                                                        <CheckCircle2 className="w-4 h-4" />
+                                                        Approve
+                                                    </button>
+                                                    <button className="px-3 py-1.5 bg-[#1F2937] text-gray-400 rounded-lg text-sm hover:bg-[#2A3441] transition-all">
+                                                        Review
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))
+                            )}
                         </div>
                     </div>
                 </div>
@@ -390,36 +417,45 @@ const SupervisorDashboard = () => {
                     <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-6">
                         <h2 className="text-lg font-bold text-white mb-6">Crew Status</h2>
                         <div className="space-y-3">
-                            {crewMembers.map((member) => (
-                                <div
-                                    key={member.id}
-                                    className="bg-[#0B0E14] border border-[#1F2937] rounded-lg p-3 hover:border-orange-600/50 transition-all"
-                                >
-                                    <div className="flex items-start gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-600/20 to-red-600/20 flex items-center justify-center border border-orange-600/30 flex-shrink-0">
-                                            <span className="text-orange-400 font-bold text-sm">
-                                                {member.name.split(' ').map(n => n[0]).join('')}
-                                            </span>
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center justify-between mb-1">
-                                                <h4 className="text-white font-medium text-sm truncate">{member.name}</h4>
-                                                <span className={`px-2 py-0.5 rounded-full text-xs border ${getCrewStatusColor(member.status)}`}>
-                                                    {member.status}
+                            {crewLoading ? (
+                                <>
+                                    <Skeleton className="h-16 w-full" />
+                                    <Skeleton className="h-16 w-full" />
+                                    <Skeleton className="h-16 w-full" />
+                                    <Skeleton className="h-16 w-full" />
+                                </>
+                            ) : (
+                                crewMembers.map((member) => (
+                                    <div
+                                        key={member.id}
+                                        className="bg-[#0B0E14] border border-[#1F2937] rounded-lg p-3 hover:border-orange-600/50 transition-all"
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-600/20 to-red-600/20 flex items-center justify-center border border-orange-600/30 flex-shrink-0">
+                                                <span className="text-orange-400 font-bold text-sm">
+                                                    {member.name.split(' ').map(n => n[0]).join('')}
                                                 </span>
                                             </div>
-                                            <p className="text-xs text-gray-400 mb-1">{member.role}</p>
-                                            {member.currentJob && (
-                                                <p className="text-xs text-orange-400">On: {member.currentJob}</p>
-                                            )}
-                                            <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
-                                                <Phone className="w-3 h-3" />
-                                                <span>{member.phone}</span>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <h4 className="text-white font-medium text-sm truncate">{member.name}</h4>
+                                                    <span className={`px-2 py-0.5 rounded-full text-xs border ${getCrewStatusColor(member.status)}`}>
+                                                        {member.status}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-gray-400 mb-1">{member.role}</p>
+                                                {member.currentJob && (
+                                                    <p className="text-xs text-orange-400">On: {member.currentJob}</p>
+                                                )}
+                                                <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                                                    <Phone className="w-3 h-3" />
+                                                    <span>{member.phone}</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))
+                            )}
                         </div>
                     </div>
 

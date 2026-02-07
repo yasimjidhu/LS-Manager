@@ -9,6 +9,7 @@ import { useState } from 'react';
 import api from '../../services/api';
 import { useAlert, useConfirm } from '../../components/ui';
 import JobDiscussionHub from './components/JobDiscussionHub';
+import { CardSkeleton, StatCardSkeleton } from '../../components/ui';
 
 const StatCard = ({
     title,
@@ -333,8 +334,24 @@ const MyJobs = () => {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-[#0B0E14] flex items-center justify-center">
-                <div className="text-white animate-pulse">Loading jobs...</div>
+            <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                    <div className="h-12 w-48 bg-[#1F2937] animate-pulse rounded-lg" />
+                </div>
+                {user?.role !== 'EMPLOYEE' && (
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <StatCardSkeleton />
+                        <StatCardSkeleton />
+                        <StatCardSkeleton />
+                        <StatCardSkeleton />
+                    </div>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-8">
+                    <CardSkeleton />
+                    <CardSkeleton />
+                    <CardSkeleton />
+                    <CardSkeleton />
+                </div>
             </div>
         );
     }

@@ -3,6 +3,9 @@ import { useSelector } from 'react-redux';
 import type { RootState } from '../../store';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { JobsService } from '../../services/jobs.service';
+import { useAlert } from '../../components/ui/AlertProvider';
+import { useConfirm } from '../../components/ui/ConfirmProvider';
+import { CalendarSkeleton, Skeleton } from '../../components/ui';
 
 import { Calendar, momentLocalizer, Views } from 'react-big-calendar';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
@@ -28,10 +31,22 @@ const JobDetailsPanel = ({ job, isLoading, onClose, onEdit, onClone, onDelete }:
 
     if (isLoading) {
         return (
-            <div className="bg-[#151A21] border border-[#1F2937] rounded-2xl p-6 h-full flex items-center justify-center">
-                <div className="text-gray-400 animate-pulse flex flex-col items-center gap-3">
-                    <LayoutDashboard className="w-8 h-8 opacity-20" />
-                    <p className="text-sm">Loading job insights...</p>
+            <div className="bg-[#151A21] border border-[#1F2937] rounded-2xl p-6 h-full flex flex-col space-y-4">
+                <div className="flex justify-between items-start">
+                    <div className="space-y-2">
+                        <Skeleton className="h-6 w-32" />
+                        <Skeleton className="h-4 w-48" />
+                    </div>
+                    <div className="flex gap-2">
+                        <Skeleton className="h-8 w-24" />
+                        <Skeleton className="h-8 w-16" />
+                    </div>
+                </div>
+                <Skeleton className="h-10 w-full rounded-xl" />
+                <div className="space-y-4">
+                    <Skeleton className="h-32 w-full rounded-xl" />
+                    <Skeleton className="h-24 w-full rounded-xl" />
+                    <Skeleton className="h-24 w-full rounded-xl" />
                 </div>
             </div>
         );
@@ -303,11 +318,7 @@ const JobDetailsPanel = ({ job, isLoading, onClose, onEdit, onClone, onDelete }:
                                         Clone Job
                                     </button>
                                     <button
-                                        onClick={() => {
-                                            if (confirm('Are you sure you want to delete this job?')) {
-                                                onDelete();
-                                            }
-                                        }}
+                                        onClick={onDelete}
                                         className="col-span-2 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 text-sm font-bold transition-colors"
                                     >
                                         Remove Job
@@ -432,6 +443,8 @@ const JobDetailsPanel = ({ job, isLoading, onClose, onEdit, onClone, onDelete }:
 
 const CreateJobModal = ({ isOpen, onClose, initialData, isEditing }: { isOpen: boolean; onClose: () => void; initialData?: any; isEditing: boolean }) => {
     const queryClient = useQueryClient();
+    const { user } = useSelector((state: RootState) => state.auth);
+    const { error: alertError } = useAlert();
     const [formData, setFormData] = useState(initialData || {
         title: '',
         date: new Date().toISOString().split('T')[0],
@@ -443,7 +456,8 @@ const CreateJobModal = ({ isOpen, onClose, initialData, isEditing }: { isOpen: b
         description: '',
         requiredWorkers: 5,
         startDate: new Date().toISOString().split('T')[0],
-        endDate: new Date().toISOString().split('T')[0]
+        endDate: new Date().toISOString().split('T')[0],
+        includeSelfAsWorker: false
     });
 
     const calculateDuration = (startDate: string, endDate: string) => {
@@ -479,9 +493,9 @@ const CreateJobModal = ({ isOpen, onClose, initialData, isEditing }: { isOpen: b
             queryClient.invalidateQueries({ queryKey: ['jobs'] });
             onClose();
         },
-        onError: (error) => {
+        onError: (error: any) => {
             console.error("Failed to save job:", error);
-            alert("Failed to save job. Please try again.");
+            alertError("Error", error.response?.data?.message || "Failed to save job. Please try again.");
         }
     });
 
@@ -489,8 +503,18 @@ const CreateJobModal = ({ isOpen, onClose, initialData, isEditing }: { isOpen: b
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        const { startDate, endDate, time, ...jobData } = formData;
-        mutation.mutate(jobData);
+
+        // Sanitize data - only send fields that are in the CreateJobDto/UpdateJobDto
+        // Remove internal fields like id, createdAt, updatedAt and relations like requests, checkouts
+        // Also remove calendar-specific fields like start, end, allDay
+        const {
+            id, createdAt, updatedAt, requests, checkouts, wages, invoice, expenses, messages,
+            start, end, allDay, // Calendar fields
+            time, startDate, endDate, // UI helper fields
+            ...sanitizedData
+        } = formData;
+
+        mutation.mutate(sanitizedData);
     };
 
     return (
@@ -557,6 +581,38 @@ const CreateJobModal = ({ isOpen, onClose, initialData, isEditing }: { isOpen: b
                         <textarea rows={3} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full bg-[#0B0E14] border border-[#1F2937] rounded-lg px-4 py-2.5 text-gray-200 text-sm focus:border-cyan-500 outline-none" />
                     </div>
 
+                    {!isEditing && (user?.role === 'SUPERVISOR' || user?.role === 'ADMIN') && (
+                        <div className="p-4 bg-blue-600/5 border border-blue-600/20 rounded-xl space-y-3">
+                            <div className="flex items-start gap-3">
+                                <div className="p-2 bg-blue-600/10 rounded-lg">
+                                    <Users className="w-4 h-4 text-blue-400" />
+                                </div>
+                                <div className="flex-1">
+                                    <h4 className="text-sm font-bold text-white mb-1">On-Site Participation</h4>
+                                    <p className="text-[11px] text-gray-400 leading-relaxed">
+                                        Would you like to be counted as a working member of the crew?
+                                        This will include you in the workforce headcount and automate your wage calculations for this session.
+                                    </p>
+                                </div>
+                                <div className="pt-1">
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            className="sr-only peer"
+                                            checked={formData.includeSelfAsWorker}
+                                            onChange={(e) => setFormData({ ...formData, includeSelfAsWorker: e.target.checked })}
+                                        />
+                                        <div className="w-11 h-6 bg-[#0B0E14] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-gray-500 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 peer-checked:after:bg-white border border-[#1F2937]"></div>
+                                    </label>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2 text-[10px] text-blue-400/60 font-medium">
+                                <AlertCircle className="w-3 h-3" />
+                                <span>You can always adjust your assignment later from the crew roster.</span>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="flex justify-end gap-3 pt-4 border-t border-[#1F2937] mt-6">
                         <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg bg-[#1F2937] hover:bg-[#374151] text-gray-300 text-sm font-medium transition-colors">Cancel</button>
                         <button type="submit" className="px-6 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold transition-colors">{isEditing ? 'Save Changes' : 'Schedule Job'}</button>
@@ -569,6 +625,8 @@ const CreateJobModal = ({ isOpen, onClose, initialData, isEditing }: { isOpen: b
 
 const Jobs = () => {
     const queryClient = useQueryClient();
+    const { success: alertSuccess, error: alertError } = useAlert();
+    const { confirm } = useConfirm();
     const { user } = useSelector((state: RootState) => state.auth);
     const isAdmin = user?.role !== 'EMPLOYEE';
     const [selectedJob, setSelectedJob] = useState<any>(null);
@@ -598,9 +656,9 @@ const Jobs = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['jobs'] });
         },
-        onError: (error) => {
+        onError: (error: any) => {
             console.error("Failed to update job:", error);
-            alert("Failed to move job. Please try again.");
+            alertError("Update Failed", "Failed to move job. Please try again.");
         }
     });
 
@@ -616,21 +674,39 @@ const Jobs = () => {
         mutationFn: JobsService.clone,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['jobs'] });
-            alert("Job cloned successfully!");
+            alertSuccess("Success", "Job cloned successfully!");
         },
         onError: () => {
-            alert("Failed to clone job. Please try again.");
+            alertError("Error", "Failed to clone job. Please try again.");
         }
     });
 
-    const handleDelete = () => {
-        if (selectedJob) {
+    const handleDelete = async () => {
+        if (!selectedJob) return;
+
+        const confirmed = await confirm({
+            title: 'Delete Job',
+            message: `Are you sure you want to delete "${selectedJob.title}"? This action cannot be undone.`,
+            confirmText: 'Delete',
+            type: 'danger'
+        });
+
+        if (confirmed) {
             deleteMutation.mutate(selectedJob.id);
         }
     };
 
-    const handleClone = () => {
-        if (selectedJob && confirm(`Duplicate job "${selectedJob.title}"?`)) {
+    const handleClone = async () => {
+        if (!selectedJob) return;
+
+        const confirmed = await confirm({
+            title: 'Clone Job',
+            message: `Do you want to create a duplicate of "${selectedJob.title}"?`,
+            confirmText: 'Clone',
+            type: 'info'
+        });
+
+        if (confirmed) {
             cloneMutation.mutate(selectedJob.id);
         }
     };
@@ -638,7 +714,7 @@ const Jobs = () => {
 
     const handleEventDrop = useCallback(
         (args: any) => {
-            const { event, start, end } = args;
+            const { event, start } = args;
             const updatedJob = { ...event };
             const startDate = moment(start).format('YYYY-MM-DD');
 
@@ -646,9 +722,7 @@ const Jobs = () => {
             updateJobMutation.mutate({
                 id: updatedJob.id,
                 data: {
-                    date: startDate,
-                    startDate: startDate,
-                    endDate: moment(end).format('YYYY-MM-DD')
+                    date: startDate
                 }
             });
         },
@@ -682,7 +756,30 @@ const Jobs = () => {
         };
     }), [jobs]);
 
-    if (isLoading) return <div className="p-10 text-white">Loading...</div>;
+    if (isLoading) {
+        return (
+            <div className="space-y-6 animate-in fade-in duration-500 pb-10 h-[calc(100vh-8rem)]">
+                <div className="flex items-center justify-between">
+                    <div className="space-y-2">
+                        <Skeleton className="h-10 w-64" />
+                        <Skeleton className="h-4 w-48" />
+                    </div>
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+                    <div className="lg:col-span-2">
+                        <CalendarSkeleton />
+                    </div>
+                    <div className="lg:col-span-1">
+                        <div className="bg-[#151A21] border border-[#1F2937] rounded-2xl p-6 h-full flex flex-col space-y-4">
+                            <Skeleton className="h-6 w-32" />
+                            <Skeleton className="h-10 w-full rounded-xl" />
+                            <Skeleton className="flex-1 w-full rounded-xl" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-10 h-[calc(100vh-8rem)]">
@@ -708,9 +805,9 @@ const Jobs = () => {
                     <DnDCalendar
                         localizer={localizer}
                         events={events} // Use memoized events
-                        startAccessor="start"
-                        endAccessor="end"
-                        onEventDrop={isAdmin ? handleEventDrop : undefined}
+                        startAccessor={(e: any) => new Date(e.start)}
+                        endAccessor={(e: any) => new Date(e.end)}
+                        onEventDrop={isAdmin ? (handleEventDrop as any) : undefined}
                         onSelectEvent={handleSelectEvent}
                         draggableAccessor={() => isAdmin}
                         resizable={isAdmin}

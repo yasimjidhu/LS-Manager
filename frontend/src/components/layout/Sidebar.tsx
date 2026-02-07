@@ -13,7 +13,9 @@ import {
     FileText,
     Coins,
     Users,
-    LogOut
+    LogOut,
+    Wrench,
+    ClipboardCheck
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -21,9 +23,11 @@ const sidebarItems = [
     { icon: LayoutGrid, label: 'Dashboard', href: '/dashboard', roles: ['ADMIN', 'SUPERVISOR', 'EMPLOYEE'] },
     { icon: Box, label: 'Inventory', href: '/inventory', roles: ['ADMIN', 'SUPERVISOR', 'EMPLOYEE'] },
     { icon: ClipboardList, label: 'Equipment Checkout', href: '/checkout', roles: ['ADMIN', 'SUPERVISOR', 'EMPLOYEE'] },
+    { icon: ClipboardCheck, label: 'Equipment Check-in', href: '/checkin', roles: ['ADMIN', 'SUPERVISOR', 'EMPLOYEE'] },
     { icon: CalendarDays, label: 'Schedule', href: '/jobs', roles: ['ADMIN', 'SUPERVISOR', 'EMPLOYEE'] },
     { icon: Briefcase, label: 'Jobs', href: '/my-jobs', roles: ['ADMIN', 'SUPERVISOR', 'EMPLOYEE'] },
     { icon: Users, label: 'Employees', href: '/employees', roles: ['ADMIN', 'SUPERVISOR'] },
+    { icon: Wrench, label: 'Maintenance', href: '/maintenance', roles: ['ADMIN', 'SUPERVISOR'] },
     { icon: FileText, label: 'Quotations', href: '/quotations', roles: ['ADMIN', 'SUPERVISOR'] },
     { icon: DollarSign, label: 'Invoices', href: '/invoices', roles: ['ADMIN', 'SUPERVISOR'] },
     { icon: Coins, label: 'Wages', href: '/wages', roles: ['ADMIN', 'SUPERVISOR', 'EMPLOYEE'] },

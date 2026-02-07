@@ -1,7 +1,8 @@
+export const API_URL = 'http://localhost:3000';
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://localhost:3000', // Backend URL
+    baseURL: API_URL, // Backend URL
     headers: {
         'Content-Type': 'application/json',
     },
@@ -29,9 +30,9 @@ api.interceptors.response.use(
                 window.location.href = '/login';
             }
         } else if (error.response?.status === 403) {
-            alert('You do not have permission to perform this action.');
+            console.error('Forbidden: You do not have permission to perform this action.');
         } else if (error.response?.status >= 500) {
-            alert(`Server Error: ${message}`);
+            console.error(`Server Error: ${message}`);
         }
 
         return Promise.reject(error);

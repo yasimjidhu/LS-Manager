@@ -7,10 +7,15 @@ import {
 } from 'lucide-react';
 import { employeeApi } from '../../services/employee.service';
 import type { Employee } from '../../services/employee.service';
+import { useAlert } from '../../components/ui/AlertProvider';
+import { useConfirm } from '../../components/ui/ConfirmProvider';
+import { StatCardSkeleton, TableSkeleton } from '../../components/ui';
 
 const Employees = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const { success, error: alertError } = useAlert();
+    const { confirm } = useConfirm();
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState<string>('ALL');
     const [statusFilter, setStatusFilter] = useState<string>('ALL');
@@ -25,18 +30,26 @@ const Employees = () => {
             employeeApi.update(id, { isActive }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['employees'] });
+            success('Status Updated', 'Employee status has been changed successfully');
         },
         onError: (err: any) => {
             const errorMessage = err?.response?.data?.message || 'Failed to update status';
-            alert(`Error: ${errorMessage}`);
+            alertError('Error', errorMessage);
         }
     });
 
-    const handleToggleStatus = (employee: Employee) => {
+    const handleToggleStatus = async (employee: Employee) => {
         const newStatus = !employee.user?.isActive;
-        const action = newStatus ? 'activate' : 'block';
+        const action = newStatus ? 'Unblock' : 'Block';
 
-        if (confirm(`Are you sure you want to ${action} ${employee.firstName} ${employee.lastName}?`)) {
+        const confirmed = await confirm({
+            title: `${action} Employee`,
+            message: `Are you sure you want to ${action.toLowerCase()} ${employee.firstName} ${employee.lastName}?`,
+            confirmText: action,
+            type: newStatus ? 'info' : 'danger'
+        });
+
+        if (confirmed) {
             toggleStatusMutation.mutate({ id: employee.id, isActive: newStatus });
         }
     };
@@ -96,48 +109,59 @@ const Employees = () => {
 
                 {/* ── Stats Cards ── */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-4">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">Total Employees</p>
-                                <p className="text-2xl font-bold text-white">{employees?.length || 0}</p>
+                    {isLoading ? (
+                        <>
+                            <StatCardSkeleton />
+                            <StatCardSkeleton />
+                            <StatCardSkeleton />
+                            <StatCardSkeleton />
+                        </>
+                    ) : (
+                        <>
+                            <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">Total Employees</p>
+                                        <p className="text-2xl font-bold text-white">{employees?.length || 0}</p>
+                                    </div>
+                                    <Users className="w-8 h-8 text-blue-400 opacity-50" />
+                                </div>
                             </div>
-                            <Users className="w-8 h-8 text-blue-400 opacity-50" />
-                        </div>
-                    </div>
-                    <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-4">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">Active</p>
-                                <p className="text-2xl font-bold text-green-400">
-                                    {employees?.filter(e => e.user?.isActive).length || 0}
-                                </p>
+                            <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">Active</p>
+                                        <p className="text-2xl font-bold text-green-400">
+                                            {employees?.filter(e => e.user?.isActive).length || 0}
+                                        </p>
+                                    </div>
+                                    <CheckCircle className="w-8 h-8 text-green-400 opacity-50" />
+                                </div>
                             </div>
-                            <CheckCircle className="w-8 h-8 text-green-400 opacity-50" />
-                        </div>
-                    </div>
-                    <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-4">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">Supervisors</p>
-                                <p className="text-2xl font-bold text-blue-400">
-                                    {employees?.filter(e => e.user?.role === 'SUPERVISOR').length || 0}
-                                </p>
+                            <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">Supervisors</p>
+                                        <p className="text-2xl font-bold text-blue-400">
+                                            {employees?.filter(e => e.user?.role === 'SUPERVISOR').length || 0}
+                                        </p>
+                                    </div>
+                                    <Briefcase className="w-8 h-8 text-blue-400 opacity-50" />
+                                </div>
                             </div>
-                            <Briefcase className="w-8 h-8 text-blue-400 opacity-50" />
-                        </div>
-                    </div>
-                    <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-4">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">Blocked</p>
-                                <p className="text-2xl font-bold text-red-400">
-                                    {employees?.filter(e => !e.user?.isActive).length || 0}
-                                </p>
+                            <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">Blocked</p>
+                                        <p className="text-2xl font-bold text-red-400">
+                                            {employees?.filter(e => !e.user?.isActive).length || 0}
+                                        </p>
+                                    </div>
+                                    <XCircle className="w-8 h-8 text-red-400 opacity-50" />
+                                </div>
                             </div>
-                            <XCircle className="w-8 h-8 text-red-400 opacity-50" />
-                        </div>
-                    </div>
+                        </>
+                    )}
                 </div>
 
                 {/* ── Filters & Search ── */}
@@ -189,7 +213,7 @@ const Employees = () => {
                 {/* ── Table ── */}
                 <div className="bg-[#151A21] border border-[#1F2937] rounded-xl overflow-hidden">
                     {isLoading ? (
-                        <div className="p-12 text-center text-gray-400">Loading employees...</div>
+                        <TableSkeleton rows={8} cols={7} />
                     ) : filteredEmployees.length === 0 ? (
                         <div className="p-12 text-center">
                             <Users className="w-12 h-12 text-gray-600 mx-auto mb-3" />

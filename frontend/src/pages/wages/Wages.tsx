@@ -12,6 +12,8 @@ import moment from 'moment';
 import { cn } from '../../lib/utils';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../store';
+import { useAlert } from '../../components/ui/AlertProvider';
+import { StatCardSkeleton, TableSkeleton, Skeleton } from '../../components/ui';
 
 type ViewMode = 'flat' | 'grouped';
 
@@ -25,6 +27,9 @@ const Wages = () => {
     const [viewMode, setViewMode] = useState<ViewMode>('grouped');
     const [expandedJobs, setExpandedJobs] = useState<Set<string>>(new Set());
     const queryClient = useQueryClient();
+    const { error: alertError } = useAlert();
+
+    const [isExporting, setIsExporting] = useState(false);
 
     const { data: employees = [] } = useQuery({
         queryKey: ['employees'],
@@ -128,6 +133,40 @@ const Wages = () => {
         });
     };
 
+    const handleExport = async () => {
+        if (!isAdmin) return;
+        setIsExporting(true);
+        const params: any = {};
+        if (dateFilter === 'this-month') {
+            params.month = moment().format('YYYY-MM');
+        } else if (dateFilter === 'last-month') {
+            params.month = moment().subtract(1, 'months').format('YYYY-MM');
+        }
+        if (employeeFilter) params.employeeId = employeeFilter;
+        if (statusFilter === 'paid') params.status = 'PAID';
+        if (statusFilter === 'pending') params.status = 'UNPAID';
+
+        try {
+            const response = await api.get('/wages/export', {
+                params,
+                responseType: 'blob'
+            });
+
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `wages_export_${moment().format('YYYY-MM-DD')}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            console.error('Export failed:', error);
+            alertError("Export Failed", "Failed to export wages. Please try again.");
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
     // Group wages by job
     const groupedWages = wages.reduce((acc: any, wage: any) => {
         const jobId = wage.job?.id || 'no-job';
@@ -206,9 +245,13 @@ const Wages = () => {
                                 <RefreshCw className={cn("w-4 h-4", recalculateMutation.isPending && "animate-spin")} />
                                 Recalculate
                             </button>
-                            <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors">
-                                <Download className="w-4 h-4" />
-                                Export
+                            <button
+                                onClick={handleExport}
+                                disabled={isExporting}
+                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all shadow-lg shadow-blue-900/20 disabled:opacity-50"
+                            >
+                                <Download className={cn("w-4 h-4", isExporting && "animate-pulse")} />
+                                {isExporting ? 'Exporting...' : 'Export CSV'}
                             </button>
                         </div>
                     )}
@@ -216,49 +259,60 @@ const Wages = () => {
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                    <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-2xl p-6 shadow-lg shadow-emerald-950/20 group hover:scale-[1.02] transition-transform">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="p-2 bg-white/10 rounded-lg">
-                                <CheckCircle className="w-6 h-6 text-white" />
+                    {isLoadingWages ? (
+                        <>
+                            <StatCardSkeleton />
+                            <StatCardSkeleton />
+                            <StatCardSkeleton />
+                            <StatCardSkeleton />
+                        </>
+                    ) : (
+                        <>
+                            <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-2xl p-6 shadow-lg shadow-emerald-950/20 group hover:scale-[1.02] transition-transform">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="p-2 bg-white/10 rounded-lg">
+                                        <CheckCircle className="w-6 h-6 text-white" />
+                                    </div>
+                                    <TrendingUp className="w-4 h-4 text-white/40" />
+                                </div>
+                                <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">{isAdmin ? 'Total Paid' : 'Total Withdrawn'}</p>
+                                <p className="text-3xl font-black text-white font-mono">₹{Number(wageStats.totalPaid || 0).toLocaleString()}</p>
                             </div>
-                            <TrendingUp className="w-4 h-4 text-white/40" />
-                        </div>
-                        <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">{isAdmin ? 'Total Paid' : 'Total Withdrawn'}</p>
-                        <p className="text-3xl font-black text-white font-mono">₹{Number(wageStats.totalPaid || 0).toLocaleString()}</p>
-                    </div>
 
-                    <div className="bg-gradient-to-br from-amber-600 to-amber-800 rounded-2xl p-6 shadow-lg shadow-amber-950/20 group hover:scale-[1.02] transition-transform">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="p-2 bg-white/10 rounded-lg">
-                                <Clock className="w-6 h-6 text-white" />
+                            <div className="bg-gradient-to-br from-amber-600 to-amber-800 rounded-2xl p-6 shadow-lg shadow-amber-950/20 group hover:scale-[1.02] transition-transform">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="p-2 bg-white/10 rounded-lg">
+                                        <Clock className="w-6 h-6 text-white" />
+                                    </div>
+                                    <AlertCircle className="w-4 h-4 text-white/40" />
+                                </div>
+                                <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">{isAdmin ? 'Pending' : 'Pending Balance'}</p>
+                                <p className="text-3xl font-black text-white font-mono">₹{Number(wageStats.totalPending || 0).toLocaleString()}</p>
                             </div>
-                            <AlertCircle className="w-4 h-4 text-white/40" />
-                        </div>
-                        <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">{isAdmin ? 'Pending' : 'Pending Balance'}</p>
-                        <p className="text-3xl font-black text-white font-mono">₹{Number(wageStats.totalPending || 0).toLocaleString()}</p>
-                    </div>
 
-                    <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-6 shadow-lg shadow-blue-950/20 group hover:scale-[1.02] transition-transform">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="p-2 bg-white/10 rounded-lg">
-                                <Calendar className="w-6 h-6 text-white" />
+                            <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-6 shadow-lg shadow-blue-950/20 group hover:scale-[1.02] transition-transform">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="p-2 bg-white/10 rounded-lg">
+                                        <Calendar className="w-6 h-6 text-white" />
+                                    </div>
+                                </div>
+                                <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">M-O-M Earning</p>
+                                <p className="text-3xl font-black text-white font-mono">₹{Number(wageStats.thisMonth || 0).toLocaleString()}</p>
                             </div>
-                        </div>
-                        <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">M-O-M Earning</p>
-                        <p className="text-3xl font-black text-white font-mono">₹{Number(wageStats.thisMonth || 0).toLocaleString()}</p>
-                    </div>
 
-                    <div className="bg-gradient-to-br from-purple-600 to-purple-800 rounded-2xl p-6 shadow-lg shadow-purple-950/20 group hover:scale-[1.02] transition-transform">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="p-2 bg-white/10 rounded-lg">
-                                {isAdmin ? <Users className="w-6 h-6 text-white" /> : <HardHat className="w-6 h-6 text-white" />}
+                            <div className="bg-gradient-to-br from-purple-600 to-purple-800 rounded-2xl p-6 shadow-lg shadow-purple-950/20 group hover:scale-[1.02] transition-transform">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="p-2 bg-white/10 rounded-lg">
+                                        {isAdmin ? <Users className="w-6 h-6 text-white" /> : <HardHat className="w-6 h-6 text-white" />}
+                                    </div>
+                                </div>
+                                <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">{isAdmin ? 'Avg / Employee' : 'Avg / Job'}</p>
+                                <p className="text-3xl font-black text-white font-mono">
+                                    ₹{wages.length > 0 ? Math.round((wageStats.thisMonth || 0) / (isAdmin ? new Set(wages.map((w: any) => w.employeeId)).size : wages.length)).toLocaleString() : 0}
+                                </p>
                             </div>
-                        </div>
-                        <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">{isAdmin ? 'Avg / Employee' : 'Avg / Job'}</p>
-                        <p className="text-3xl font-black text-white font-mono">
-                            ₹{wages.length > 0 ? Math.round((wageStats.thisMonth || 0) / (isAdmin ? new Set(wages.map((w: any) => w.employeeId)).size : wages.length)).toLocaleString() : 0}
-                        </p>
-                    </div>
+                        </>
+                    )}
                 </div>
 
                 {/* Chart (Enhanced) */}
@@ -379,9 +433,16 @@ const Wages = () => {
                 {viewMode === 'grouped' ? (
                     <div className="space-y-4">
                         {isLoadingWages ? (
-                            <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-8 text-center text-gray-500">
-                                Loading wages...
-                            </div>
+                            <>
+                                <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-6">
+                                    <Skeleton className="h-12 w-full mb-4" />
+                                    <TableSkeleton rows={3} cols={6} />
+                                </div>
+                                <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-6">
+                                    <Skeleton className="h-12 w-full mb-4" />
+                                    <TableSkeleton rows={3} cols={6} />
+                                </div>
+                            </>
                         ) : groupedWagesArray.length === 0 ? (
                             <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-8 text-center text-gray-500">
                                 No wages found
@@ -529,12 +590,11 @@ const Wages = () => {
                                 </thead>
                                 <tbody className="divide-y divide-[#1F2937]">
                                     {isLoadingWages ? (
-                                        <tr><td colSpan={isAdmin ? 6 : 5} className="text-center py-12 text-gray-500">
-                                            <div className="flex flex-col items-center gap-2">
-                                                <RefreshCw className="w-6 h-6 animate-spin text-blue-500" />
-                                                Loading wages...
-                                            </div>
-                                        </td></tr>
+                                        <tr>
+                                            <td colSpan={isAdmin ? 6 : 5} className="p-0">
+                                                <TableSkeleton rows={10} cols={isAdmin ? 6 : 5} />
+                                            </td>
+                                        </tr>
                                     ) : wages.length === 0 ? (
                                         <tr><td colSpan={isAdmin ? 6 : 5} className="text-center py-12 text-gray-500">No records found matching your filters</td></tr>
                                     ) : (
