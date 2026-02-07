@@ -138,6 +138,7 @@ model InventoryItem {
   quantity    Int        @default(0) // Total quantity owned
   price       Decimal    @default(0) @db.Decimal(10, 2) // Rental price per unit
   status      ItemStatus @default(AVAILABLE)
+  imageUrl    String?    // URL to uploaded image
   
   categoryId  String
   category    InventoryCategory @relation(fields: [categoryId], references: [id])

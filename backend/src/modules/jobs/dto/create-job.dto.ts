@@ -39,4 +39,7 @@ export class CreateJobDto {
     @IsOptional()
     @IsNumber()
     requiredWorkers?: number;
+
+    @IsOptional()
+    includeSelfAsWorker?: boolean;
 }

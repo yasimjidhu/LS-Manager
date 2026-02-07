@@ -357,4 +357,33 @@ export class WagesService {
         });
     }
 
+    async exportWages(filters: { employeeId?: string; month?: string; status?: 'PAID' | 'UNPAID' }) {
+        const wages = await this.findAll(filters);
+
+        const headers = [
+            'Employee Name',
+            'Job/Event',
+            'Date',
+            'Amount (₹)',
+            'Status',
+            'Paid At'
+        ];
+
+        const rows = wages.map(wage => [
+            `${wage.employee.firstName} ${wage.employee.lastName}`,
+            wage.job?.title || wage.event?.name || 'N/A',
+            wage.job?.date || wage.event?.startDate || wage.createdAt.toISOString().split('T')[0],
+            wage.amount,
+            wage.isPaid ? 'PAID' : 'UNPAID',
+            wage.paidAt ? wage.paidAt.toISOString() : ''
+        ]);
+
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(','))
+        ].join('\n');
+
+        return csvContent;
+    }
+
 }

@@ -215,7 +215,9 @@ export class AnalyticsService {
 
         const approvedJobs = jobRequests.filter(r => r.status === 'APPROVED');
         const completedJobs = approvedJobs.filter(r => r.job.status === 'COMPLETED');
-        const upcomingJobs = approvedJobs.filter(r => r.job.status === 'PLANNED' || r.job.status === 'ONGOING');
+        const upcomingJobs = approvedJobs
+            .filter(r => r.job.status === 'PLANNED' || r.job.status === 'ONGOING')
+            .sort((a, b) => new Date(a.job.date).getTime() - new Date(b.job.date).getTime());
 
         // Fetch earnings summary from Wage table
         const wages = await this.prisma.wage.aggregate({
@@ -240,6 +242,21 @@ export class AnalyticsService {
                 employeeId,
                 createdAt: { gte: startDate, lte: endDate }
             }
+        });
+
+        // Fetch available jobs (opportunities)
+        const availableJobs = await this.prisma.job.findMany({
+            where: {
+                status: { in: ['PENDING', 'PLANNED'] },
+                date: { gte: new Date().toISOString().split('T')[0] },
+                requests: {
+                    none: {
+                        employeeId: employeeId
+                    }
+                }
+            },
+            orderBy: { date: 'asc' },
+            take: 3
         });
 
         return {
@@ -268,6 +285,13 @@ export class AnalyticsService {
                 time: r.job.time || 'TBD',
                 location: r.job.location,
                 status: r.job.status
+            })),
+            availableJobs: availableJobs.map(j => ({
+                id: j.id,
+                title: j.title,
+                location: j.location,
+                date: j.date,
+                status: j.status
             }))
         };
     }

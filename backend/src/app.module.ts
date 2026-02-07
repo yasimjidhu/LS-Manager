@@ -24,6 +24,8 @@ import { WagePoliciesModule } from './modules/wage-policies/wage-policies.module
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { JobExpensesModule } from './modules/job-expenses/job-expenses.module';
 import { DiscussionModule } from './modules/discussion/discussion.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -54,6 +56,10 @@ import { DiscussionModule } from './modules/discussion/discussion.module';
     WagePoliciesModule,
     JobExpensesModule,
     DiscussionModule,
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'uploads'),
+      serveRoot: '/uploads',
+    }),
   ],
   controllers: [],
   providers: [],

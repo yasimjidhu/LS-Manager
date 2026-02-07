@@ -11,8 +11,10 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Security Headers
-  app.use(helmet());
+  // Security Headers - Configured to allow cross-origin resource loading (for images)
+  app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+  }));
 
   // Swagger Documentation Setup
   const config = new DocumentBuilder()

@@ -1,14 +1,29 @@
-import { Controller, Get, Post, Param, Query, UseGuards, Put, Body, Patch, Req } from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, UseGuards, Put, Body, Patch, Req, Res } from '@nestjs/common';
 import { WagesService } from './wages.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
+import * as express from 'express';
 
 @Controller('wages')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class WagesController {
     constructor(private readonly wagesService: WagesService) { }
+
+    @Get('export')
+    @Roles(Role.ADMIN)
+    async exportWages(
+        @Res() res: express.Response,
+        @Query('employeeId') employeeId?: string,
+        @Query('month') month?: string,
+        @Query('status') status?: 'PAID' | 'UNPAID'
+    ) {
+        const csv = await this.wagesService.exportWages({ employeeId, month, status });
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename=wages_export_${new Date().toISOString().split('T')[0]}.csv`);
+        return res.send(csv);
+    }
 
     @Get()
     @Roles(Role.ADMIN, Role.SUPERVISOR, Role.EMPLOYEE)

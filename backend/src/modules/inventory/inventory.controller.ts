@@ -1,21 +1,55 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { InventoryService } from './inventory.service';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { CreateInventoryItemDto } from './dto/create-inventory-item.dto';
 import { UpdateInventoryItemDto } from './dto/update-inventory-item.dto';
+
 import { CreateCategoryDto } from './dto/create-category.dto';
+import { CheckoutItemDto } from './dto/checkout-item.dto';
+import { CheckInItemDto } from './dto/checkin-item.dto';
 import { ItemStatus, Role } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { Request } from '@nestjs/common';
 
 @Controller('inventory')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class InventoryController {
     constructor(private readonly inventoryService: InventoryService) { }
 
+    @Post('checkout')
+    @Roles(Role.ADMIN, Role.SUPERVISOR, Role.EMPLOYEE)
+    checkout(@Body() checkoutItemDto: CheckoutItemDto, @Request() req) {
+        return this.inventoryService.checkout(checkoutItemDto, req.user.userId);
+    }
+
+    @Post('checkin')
+    @Roles(Role.ADMIN, Role.SUPERVISOR, Role.EMPLOYEE)
+    checkIn(@Body() checkInItemDto: CheckInItemDto) {
+        return this.inventoryService.checkIn(checkInItemDto);
+    }
+
     @Post()
     @Roles(Role.ADMIN, Role.SUPERVISOR)
-    create(@Body() createInventoryItemDto: CreateInventoryItemDto) {
+    @UseInterceptors(FileInterceptor('file', {
+        storage: diskStorage({
+            destination: './uploads/inventory',
+            filename: (req, file, cb) => {
+                const randomName = Array(32).fill(null).map(() => (Math.round(Math.random() * 16)).toString(16)).join('');
+                return cb(null, `${randomName}${extname(file.originalname)}`);
+            }
+        })
+    }))
+    create(@Body() createInventoryItemDto: CreateInventoryItemDto, @UploadedFile() file: Express.Multer.File) {
+        if (file) {
+            createInventoryItemDto.imageUrl = `/uploads/inventory/${file.filename}`;
+        }
+        if (createInventoryItemDto.quantity && typeof createInventoryItemDto.quantity === 'string') createInventoryItemDto.quantity = Number(createInventoryItemDto.quantity);
+        if (createInventoryItemDto.price && typeof createInventoryItemDto.price === 'string') createInventoryItemDto.price = Number(createInventoryItemDto.price);
+
         return this.inventoryService.create(createInventoryItemDto);
     }
 
@@ -57,7 +91,22 @@ export class InventoryController {
 
     @Patch(':id')
     @Roles(Role.ADMIN, Role.SUPERVISOR)
-    update(@Param('id') id: string, @Body() updateInventoryItemDto: UpdateInventoryItemDto) {
+    @UseInterceptors(FileInterceptor('file', {
+        storage: diskStorage({
+            destination: './uploads/inventory',
+            filename: (req, file, cb) => {
+                const randomName = Array(32).fill(null).map(() => (Math.round(Math.random() * 16)).toString(16)).join('');
+                return cb(null, `${randomName}${extname(file.originalname)}`);
+            }
+        })
+    }))
+    update(@Param('id') id: string, @Body() updateInventoryItemDto: UpdateInventoryItemDto, @UploadedFile() file: Express.Multer.File) {
+        if (file) {
+            updateInventoryItemDto.imageUrl = `/uploads/inventory/${file.filename}`;
+        }
+        if (updateInventoryItemDto.quantity && typeof updateInventoryItemDto.quantity === 'string') updateInventoryItemDto.quantity = Number(updateInventoryItemDto.quantity);
+        if (updateInventoryItemDto.price && typeof updateInventoryItemDto.price === 'string') updateInventoryItemDto.price = Number(updateInventoryItemDto.price);
+
         return this.inventoryService.update(id, updateInventoryItemDto);
     }
 

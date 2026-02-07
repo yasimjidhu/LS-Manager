@@ -15,9 +15,29 @@ export class JobsService {
 
     async create(createJobDto: CreateJobDto, userId: string) {
         try {
+            const { includeSelfAsWorker, ...jobData } = createJobDto;
+
             const job = await this.prisma.job.create({
-                data: createJobDto,
+                data: jobData,
             });
+
+            // If requested, include the creator as a worker (if they have an employee profile)
+            if (includeSelfAsWorker) {
+                const user = await this.prisma.user.findUnique({
+                    where: { id: userId },
+                    include: { employee: true }
+                });
+
+                if (user?.employee) {
+                    await this.prisma.jobRequest.create({
+                        data: {
+                            jobId: job.id,
+                            employeeId: user.employee.id,
+                            status: 'PENDING'
+                        }
+                    });
+                }
+            }
 
             // Auto-create Group Chat / Welcome Message
             await this.prisma.jobMessage.create({
@@ -33,7 +53,8 @@ export class JobsService {
                 ['ADMIN', 'SUPERVISOR'],
                 'New Job Scheduled',
                 `Job "${job.title}" has been scheduled for ${job.date}.`,
-                'INFO'
+                'INFO' 
+                
             );
 
             return job;
@@ -46,15 +67,18 @@ export class JobsService {
     async clone(id: string, userId: string) {
         const existingJob = await this.findOne(id);
 
-        // Prepare new job data
-        const { id: _, createdAt, updatedAt, status, ...jobData } = existingJob;
-
+        // Prepare new job data - only scalar fields
         const newJob = await this.prisma.job.create({
             data: {
-                ...jobData,
-                title: `${jobData.title} (Copy)`,
-                status: 'PENDING', // Reset status
-                // Date remains same, user can change later
+                title: `${existingJob.title} (Copy)`,
+                date: existingJob.date,
+                duration: existingJob.duration,
+                location: existingJob.location,
+                client: existingJob.client,
+                description: existingJob.description,
+                status: 'PENDING',
+                color: existingJob.color,
+                requiredWorkers: existingJob.requiredWorkers,
             }
         });
 
@@ -68,6 +92,22 @@ export class JobsService {
 
             await this.prisma.jobRequest.createMany({
                 data: requests
+            });
+        }
+
+        // Clone Gear List (Checkouts) - Optional but often desired during clone
+        if (existingJob.checkouts && existingJob.checkouts.length > 0) {
+            const checkouts = existingJob.checkouts.map(log => ({
+                jobId: newJob.id,
+                itemId: log.itemId,
+                quantity: log.quantity,
+                assignedToId: log.assignedToId,
+                status: 'CHECKED_OUT' as const, // Re-record as checked out
+                checkedOutAt: new Date(),
+            }));
+
+            await this.prisma.checkoutLog.createMany({
+                data: checkouts
             });
         }
 
