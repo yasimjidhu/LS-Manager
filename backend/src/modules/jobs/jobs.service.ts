@@ -53,8 +53,8 @@ export class JobsService {
                 ['ADMIN', 'SUPERVISOR'],
                 'New Job Scheduled',
                 `Job "${job.title}" has been scheduled for ${job.date}.`,
-                'INFO' 
-                
+                'INFO'
+
             );
 
             return job;
@@ -123,11 +123,48 @@ export class JobsService {
         return newJob;
     }
 
-    async findAll(page: number = 1, limit: number = 50) {
+    async findAll(params?: {
+        page?: number;
+        limit?: number;
+        search?: string;
+        date?: string;
+        viewMode?: string;
+        userId?: string;
+    }) {
+        const { page = 1, limit = 50, search, date, viewMode, userId } = params || {};
         const skip = (page - 1) * limit;
+
+        const where: any = {};
+
+        if (search) {
+            where.OR = [
+                { title: { contains: search, mode: 'insensitive' } },
+                { client: { contains: search, mode: 'insensitive' } },
+                { location: { contains: search, mode: 'insensitive' } }
+            ];
+        }
+
+        if (date) {
+            where.date = date; // Expecting YYYY-MM-DD
+        }
+
+        if (viewMode && userId) {
+            const employee = await this.prisma.employee.findUnique({ where: { userId } });
+            if (employee) {
+                if (viewMode === 'BROWSE') {
+                    where.requests = { none: { employeeId: employee.id } };
+                    where.status = { in: ['PLANNED', 'PENDING'] };
+                } else if (viewMode === 'APPLICATIONS') {
+                    where.requests = { some: { employeeId: employee.id, status: { in: ['PENDING', 'REJECTED'] } } };
+                } else if (viewMode === 'SCHEDULE') {
+                    where.requests = { some: { employeeId: employee.id, status: 'APPROVED' } };
+                }
+            }
+        }
 
         const [jobs, total] = await Promise.all([
             this.prisma.job.findMany({
+                where,
                 orderBy: [
                     { date: 'asc' },
                 ],
@@ -141,7 +178,7 @@ export class JobsService {
                 take: Number(limit),
                 skip: Number(skip),
             }),
-            this.prisma.job.count()
+            this.prisma.job.count({ where })
         ]);
 
         return {
@@ -214,5 +251,21 @@ export class JobsService {
         return this.prisma.job.delete({
             where: { id },
         });
+    }
+
+    async getStats() {
+        const [planned, ongoing, completed, total] = await Promise.all([
+            this.prisma.job.count({ where: { status: 'PLANNED' } }),
+            this.prisma.job.count({ where: { status: 'ONGOING' } }),
+            this.prisma.job.count({ where: { status: 'COMPLETED' } }),
+            this.prisma.job.count()
+        ]);
+
+        return {
+            planned,
+            ongoing,
+            completed,
+            total
+        };
     }
 }

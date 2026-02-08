@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Body, Param, UseGuards, Patch } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param, UseGuards, Patch, Query } from '@nestjs/common';
 import { WagePoliciesService } from './wage-policies.service';
 import { CreatePieceRateDto } from './dto/create-piece-rate.dto';
 import { CreateRoleRateDto } from './dto/create-role-rate.dto';
@@ -14,8 +14,12 @@ export class WagePoliciesController {
 
     @Get('piece-rates')
     @Roles(Role.ADMIN)
-    async getPieceRates() {
-        return this.wagePoliciesService.findAllPieceRates();
+    async getPieceRates(
+        @Query('page') page?: number,
+        @Query('limit') limit?: number,
+        @Query('search') search?: string
+    ) {
+        return this.wagePoliciesService.findAllPieceRates({ page, limit, search });
     }
 
     @Post('piece-rates')
@@ -39,8 +43,12 @@ export class WagePoliciesController {
 
     @Get('role-rates')
     @Roles(Role.ADMIN)
-    async getRoleRates() {
-        return this.wagePoliciesService.findAllRoleRates();
+    async getRoleRates(
+        @Query('page') page?: number,
+        @Query('limit') limit?: number,
+        @Query('search') search?: string
+    ) {
+        return this.wagePoliciesService.findAllRoleRates({ page, limit, search });
     }
 
     @Post('role-rates')

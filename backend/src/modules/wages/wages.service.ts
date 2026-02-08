@@ -238,20 +238,21 @@ export class WagesService {
         return { message: `Recalculated wages for ${jobs.length} jobs` };
     }
 
-    async findAll(filters: { employeeId?: string; month?: string; status?: 'PAID' | 'UNPAID' }) {
+    async findAll(filters: { employeeId?: string; month?: string; status?: 'PAID' | 'UNPAID'; page?: number; limit?: number }) {
         console.log('inside getall wages', filters)
+        const { employeeId, month, status, page = 1, limit = 10 } = filters;
         const where: any = {};
 
-        if (filters.employeeId) {
-            where.employeeId = filters.employeeId;
+        if (employeeId) {
+            where.employeeId = employeeId;
         }
 
-        if (filters.status) {
-            where.isPaid = filters.status === 'PAID';
+        if (status) {
+            where.isPaid = status === 'PAID';
         }
 
-        if (filters.month) {
-            const date = new Date(filters.month + '-01'); // YYYY-MM
+        if (month) {
+            const date = new Date(month + '-01'); // YYYY-MM
             const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
             const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
 
@@ -261,29 +262,45 @@ export class WagesService {
             };
         }
 
-        return this.prisma.wage.findMany({
-            where,
-            include: {
-                employee: true,
-                job: {
-                    select: {
-                        id: true,
-                        title: true,
-                        date: true
+        const skip = (page - 1) * limit;
+        const [wages, total] = await Promise.all([
+            this.prisma.wage.findMany({
+                where,
+                include: {
+                    employee: true,
+                    job: {
+                        select: {
+                            id: true,
+                            title: true,
+                            date: true
+                        }
+                    },
+                    event: {
+                        select: {
+                            id: true,
+                            name: true,
+                            startDate: true
+                        }
                     }
                 },
-                event: {
-                    select: {
-                        id: true,
-                        name: true,
-                        startDate: true
-                    }
-                }
-            },
-            orderBy: {
-                createdAt: 'desc'
+                orderBy: {
+                    createdAt: 'desc'
+                },
+                skip: Number(skip),
+                take: Number(limit)
+            }),
+            this.prisma.wage.count({ where })
+        ]);
+
+        return {
+            data: wages,
+            meta: {
+                total,
+                page: Number(page),
+                limit: Number(limit),
+                totalPages: Math.ceil(total / limit)
             }
-        });
+        };
     }
 
     async getStats() {
@@ -358,7 +375,9 @@ export class WagesService {
     }
 
     async exportWages(filters: { employeeId?: string; month?: string; status?: 'PAID' | 'UNPAID' }) {
-        const wages = await this.findAll(filters);
+        // Export all records by using a large limit
+        const result = await this.findAll({ ...filters, limit: 10000 });
+        const wages = result.data;
 
         const headers = [
             'Employee Name',

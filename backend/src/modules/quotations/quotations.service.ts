@@ -136,17 +136,44 @@ export class QuotationsService {
         }
     }
 
-    async findAll() {
+    async findAll(params?: { page?: number; limit?: number; search?: string }) {
+        const { page = 1, limit = 10, search } = params || {};
+        const skip = (page - 1) * limit;
+
+        const where: any = {};
+        if (search) {
+            where.OR = [
+                { clientName: { contains: search, mode: 'insensitive' } },
+                { event: { name: { contains: search, mode: 'insensitive' } } }
+            ];
+        }
+
         try {
-            return await this.prisma.quotation.findMany({
-                include: {
-                    event: true,
-                    items: {
-                        include: { item: true }
-                    }
-                },
-                orderBy: { createdAt: 'desc' }
-            });
+            const [quotations, total] = await Promise.all([
+                this.prisma.quotation.findMany({
+                    where,
+                    include: {
+                        event: true,
+                        items: {
+                            include: { item: true }
+                        }
+                    },
+                    orderBy: { createdAt: 'desc' },
+                    skip: Number(skip),
+                    take: Number(limit)
+                }),
+                this.prisma.quotation.count({ where })
+            ]);
+
+            return {
+                data: quotations,
+                meta: {
+                    total,
+                    page: Number(page),
+                    limit: Number(limit),
+                    totalPages: Math.ceil(total / limit)
+                }
+            };
         } catch (error) {
             throw new InternalServerErrorException(
                 'Failed to fetch quotations'
@@ -177,6 +204,25 @@ export class QuotationsService {
                 'Failed to fetch quotation'
             );
         }
+    }
+
+    async getStats() {
+        const [draft, sent, accepted, totalValue] = await Promise.all([
+            this.prisma.quotation.count({ where: { status: 'DRAFT' } }),
+            this.prisma.quotation.count({ where: { status: 'SENT' } }),
+            this.prisma.quotation.count({ where: { status: 'ACCEPTED' } }),
+            this.prisma.quotation.aggregate({
+                _sum: { totalAmount: true },
+                where: { status: 'ACCEPTED' }
+            })
+        ]);
+
+        return {
+            draft,
+            sent,
+            accepted,
+            totalValue: totalValue._sum.totalAmount || 0
+        };
     }
 
     async updateStatus(id: string, status: any) {

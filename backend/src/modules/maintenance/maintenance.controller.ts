@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Req, UseGuards, Patch, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Req, UseGuards, Patch, Delete, Query } from '@nestjs/common';
 import { MaintenanceService } from './maintenance.service';
 import { CreateMaintenanceLogDto } from './dto/create-maintenance-log.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -23,8 +23,13 @@ export class MaintenanceController {
     }
 
     @Get()
-    findAll() {
-        return this.maintenanceService.findAll();
+    findAll(
+        @Query('page') page?: number,
+        @Query('limit') limit?: number,
+        @Query('search') search?: string,
+        @Query('status') status?: string
+    ) {
+        return this.maintenanceService.findAll({ page, limit, search, status });
     }
 
     @Patch(':id')

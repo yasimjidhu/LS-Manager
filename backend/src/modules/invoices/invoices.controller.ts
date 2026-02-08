@@ -19,9 +19,18 @@ export class InvoicesController {
         }
     }
 
+    @Get('stats')
+    getStats() {
+        return this.invoicesService.getStats();
+    }
+
     @Get()
-    findAll(@Query('page') page?: number, @Query('limit') limit?: number) {
-        return this.invoicesService.findAll(page, limit);
+    findAll(
+        @Query('page') page?: number,
+        @Query('limit') limit?: number,
+        @Query('search') search?: string
+    ) {
+        return this.invoicesService.findAll(page, limit, search);
     }
 
     @Get(':id')

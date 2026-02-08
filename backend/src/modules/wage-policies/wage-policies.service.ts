@@ -8,10 +8,36 @@ export class WagePoliciesService {
     constructor(private prisma: PrismaService) { }
 
     // Piece Rates
-    async findAllPieceRates() {
-        return this.prisma.itemPieceRate.findMany({
-            include: { item: true }
-        });
+    async findAllPieceRates(params?: { page?: number; limit?: number; search?: string }) {
+        const { page = 1, limit = 10, search } = params || {};
+        const skip = (page - 1) * limit;
+
+        const where: any = {};
+        if (search) {
+            where.item = {
+                name: { contains: search, mode: 'insensitive' }
+            };
+        }
+
+        const [pieceRates, total] = await Promise.all([
+            this.prisma.itemPieceRate.findMany({
+                where,
+                include: { item: true },
+                skip: Number(skip),
+                take: Number(limit)
+            }),
+            this.prisma.itemPieceRate.count({ where })
+        ]);
+
+        return {
+            data: pieceRates,
+            meta: {
+                total,
+                page: Number(page),
+                limit: Number(limit),
+                totalPages: Math.ceil(total / limit)
+            }
+        };
     }
 
     async createPieceRate(dto: CreatePieceRateDto) {
@@ -42,9 +68,35 @@ export class WagePoliciesService {
     }
 
     // Role Rates
-    async findAllRoleRates() {
-        // @ts-ignore - access to table that might not be in client yet
-        return this.prisma.globalRoleRate.findMany();
+    async findAllRoleRates(params?: { page?: number; limit?: number; search?: string }) {
+        const { page = 1, limit = 10, search } = params || {};
+        const skip = (page - 1) * limit;
+
+        const where: any = {};
+        if (search) {
+            where.roleName = { contains: search, mode: 'insensitive' };
+        }
+
+        const [roleRates, total] = await Promise.all([
+            // @ts-ignore
+            this.prisma.globalRoleRate.findMany({
+                where,
+                skip: Number(skip),
+                take: Number(limit)
+            }),
+            // @ts-ignore
+            this.prisma.globalRoleRate.count({ where })
+        ]);
+
+        return {
+            data: roleRates,
+            meta: {
+                total,
+                page: Number(page),
+                limit: Number(limit),
+                totalPages: Math.ceil(total / limit)
+            }
+        };
     }
 
     async createRoleRate(dto: CreateRoleRateDto) {

@@ -9,6 +9,11 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 export class JobsController {
     constructor(private readonly jobsService: JobsService) { }
 
+    @Get('stats')
+    getStats() {
+        return this.jobsService.getStats();
+    }
+
     @Post()
     create(@Body() createJobDto: CreateJobDto, @Request() req) {
         return this.jobsService.create(createJobDto, req.user.userId);
@@ -20,8 +25,22 @@ export class JobsController {
     }
 
     @Get()
-    findAll(@Query('page') page?: number, @Query('limit') limit?: number) {
-        return this.jobsService.findAll(page, limit);
+    findAll(
+        @Request() req: any,
+        @Query('page') page?: number,
+        @Query('limit') limit?: number,
+        @Query('search') search?: string,
+        @Query('date') date?: string,
+        @Query('viewMode') viewMode?: string
+    ) {
+        return this.jobsService.findAll({
+            page: page ? +page : 1,
+            limit: limit ? +limit : 50,
+            search,
+            date,
+            viewMode,
+            userId: req.user.userId
+        });
     }
 
     @Get(':id')

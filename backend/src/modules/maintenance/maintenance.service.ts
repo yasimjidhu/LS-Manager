@@ -45,28 +45,62 @@ export class MaintenanceService {
         });
     }
 
-    async findAll() {
-        return this.prisma.maintenanceLog.findMany({
-            include: {
-                item: true,
-                reportedBy: {
-                    select: {
-                        id: true,
-                        email: true,
-                        role: true,
-                        employee: {
-                            select: {
-                                firstName: true,
-                                lastName: true
+    async findAll(params?: { page?: number; limit?: number; search?: string; status?: string }) {
+        const { page = 1, limit = 10, search, status } = params || {};
+        const skip = (page - 1) * limit;
+
+        const where: any = {};
+        if (search) {
+            where.OR = [
+                { item: { name: { contains: search, mode: 'insensitive' } } },
+                { item: { qrCode: { contains: search, mode: 'insensitive' } } },
+                { description: { contains: search, mode: 'insensitive' } }
+            ];
+        }
+
+        if (status === 'ACTIVE') {
+            where.resolvedAt = null;
+        } else if (status === 'RESOLVED') {
+            where.resolvedAt = { not: null };
+        }
+
+        const [logs, total] = await Promise.all([
+            this.prisma.maintenanceLog.findMany({
+                where,
+                include: {
+                    item: true,
+                    reportedBy: {
+                        select: {
+                            id: true,
+                            email: true,
+                            role: true,
+                            employee: {
+                                select: {
+                                    firstName: true,
+                                    lastName: true
+                                }
                             }
                         }
                     }
-                }
-            },
-            orderBy: {
-                createdAt: 'desc'
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                },
+                skip: Number(skip),
+                take: Number(limit)
+            }),
+            this.prisma.maintenanceLog.count({ where })
+        ]);
+
+        return {
+            data: logs,
+            meta: {
+                total,
+                page: Number(page),
+                limit: Number(limit),
+                totalPages: Math.ceil(total / limit)
             }
-        });
+        };
     }
 
     async update(id: string, data: Partial<CreateMaintenanceLogDto>) {

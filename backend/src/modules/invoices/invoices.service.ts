@@ -126,10 +126,19 @@ export class InvoicesService {
         return invoice;
     }
 
-    async findAll(page: number = 1, limit: number = 20) {
+    async findAll(page: number = 1, limit: number = 20, search?: string) {
         const skip = (page - 1) * limit;
+        const where: any = {};
+        if (search) {
+            where.OR = [
+                { clientName: { contains: search, mode: 'insensitive' } },
+                { job: { title: { contains: search, mode: 'insensitive' } } }
+            ];
+        }
+
         const [invoices, total] = await Promise.all([
             this.prisma.invoice.findMany({
+                where,
                 include: {
                     job: true,
                     items: true
@@ -138,7 +147,7 @@ export class InvoicesService {
                 take: Number(limit),
                 skip: Number(skip),
             }),
-            this.prisma.invoice.count()
+            this.prisma.invoice.count({ where })
         ]);
 
         return {
@@ -149,6 +158,25 @@ export class InvoicesService {
                 limit: Number(limit),
                 totalPages: Math.ceil(total / limit)
             }
+        };
+    }
+
+    async getStats() {
+        const [draft, sent, paid, totalValue] = await Promise.all([
+            this.prisma.invoice.count({ where: { status: 'DRAFT' } }),
+            this.prisma.invoice.count({ where: { status: 'SENT' } }),
+            this.prisma.invoice.count({ where: { status: 'PAID' } }),
+            this.prisma.invoice.aggregate({
+                _sum: { totalAmount: true },
+                where: { status: 'PAID' }
+            })
+        ]);
+
+        return {
+            draft,
+            sent,
+            paid,
+            totalValue: totalValue._sum.totalAmount || 0
         };
     }
 

@@ -53,22 +53,58 @@ export class EmployeesService {
         return result;
     }
 
-    async findAll() {
-        return this.prisma.employee.findMany({
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        email: true,
-                        role: true,
-                        isActive: true
+    async findAll(params?: { page?: number; limit?: number; search?: string; role?: string; status?: string }) {
+        const { page = 1, limit = 10, search, role, status } = params || {};
+        const skip = (page - 1) * limit;
+
+        const where: any = {};
+        if (search) {
+            where.OR = [
+                { firstName: { contains: search, mode: 'insensitive' } },
+                { lastName: { contains: search, mode: 'insensitive' } },
+                { phone: { contains: search, mode: 'insensitive' } }
+            ];
+        }
+
+        if (role && role !== 'ALL') {
+            where.user = { ...where.user, role };
+        }
+
+        if (status && status !== 'ALL') {
+            where.user = { ...where.user, isActive: status === 'ACTIVE' };
+        }
+
+        const [employees, total] = await Promise.all([
+            this.prisma.employee.findMany({
+                where,
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            email: true,
+                            role: true,
+                            isActive: true
+                        }
                     }
-                }
-            },
-            orderBy: {
-                createdAt: 'desc'
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                },
+                skip: Number(skip),
+                take: Number(limit)
+            }),
+            this.prisma.employee.count({ where })
+        ]);
+
+        return {
+            data: employees,
+            meta: {
+                total,
+                page: Number(page),
+                limit: Number(limit),
+                totalPages: Math.ceil(total / limit)
             }
-        });
+        };
     }
 
     async findOne(id: string) {
@@ -195,5 +231,16 @@ export class EmployeesService {
         });
 
         return { message: 'Employee deleted successfully' };
+    }
+
+    async getStats() {
+        const [total, active, supervisors, blocked] = await Promise.all([
+            this.prisma.employee.count(),
+            this.prisma.employee.count({ where: { user: { isActive: true } } }),
+            this.prisma.employee.count({ where: { user: { role: 'SUPERVISOR' } } }),
+            this.prisma.employee.count({ where: { user: { isActive: false } } })
+        ]);
+
+        return { total, active, supervisors, blocked };
     }
 }

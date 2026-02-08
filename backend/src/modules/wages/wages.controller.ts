@@ -31,7 +31,9 @@ export class WagesController {
         @Req() req: any,
         @Query('employeeId') employeeId?: string,
         @Query('month') month?: string, // YYYY-MM
-        @Query('status') status?: 'PAID' | 'UNPAID'
+        @Query('status') status?: 'PAID' | 'UNPAID',
+        @Query('page') page?: number,
+        @Query('limit') limit?: number
     ) {
         let finalEmployeeId = employeeId;
 
@@ -43,7 +45,13 @@ export class WagesController {
             finalEmployeeId = employee.id;
         }
 
-        return this.wagesService.findAll({ employeeId: finalEmployeeId, month, status });
+        return this.wagesService.findAll({
+            employeeId: finalEmployeeId,
+            month,
+            status,
+            page,
+            limit
+        });
     }
 
     @Get('stats')

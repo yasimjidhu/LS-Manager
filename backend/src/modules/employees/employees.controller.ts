@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Patch, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Delete, Query } from '@nestjs/common';
 import { EmployeesService } from './employees.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
@@ -12,9 +12,26 @@ export class EmployeesController {
         return this.employeesService.create(createEmployeeDto);
     }
 
+    @Get('stats')
+    getStats() {
+        return this.employeesService.getStats();
+    }
+
     @Get()
-    findAll() {
-        return this.employeesService.findAll();
+    findAll(
+        @Query('page') page?: number,
+        @Query('limit') limit?: number,
+        @Query('search') search?: string,
+        @Query('role') role?: string,
+        @Query('status') status?: string
+    ) {
+        return this.employeesService.findAll({
+            page: page ? Number(page) : 1,
+            limit: limit ? Number(limit) : 10,
+            search,
+            role,
+            status
+        });
     }
 
     @Get(':id')
