@@ -163,32 +163,34 @@ const CreateQuotation = () => {
     const total = subtotal + tax;
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+        <div className="space-y-6 animate-in fade-in duration-500 pb-20 p-4 md:p-0">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <div className="flex items-center gap-3 mb-1">
-                        <Link to="/quotations" className="p-2 -ml-2 hover:bg-[#151A21] rounded-lg text-gray-400 hover:text-white transition-colors">
-                            <ArrowLeft className="w-5 h-5" />
-                        </Link>
-                        <h1 className="text-2xl font-bold text-white">{isEditMode ? 'Edit Quotation' : 'Create Quotation'}</h1>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-2 md:gap-3">
+                    <Link to="/quotations" className="p-2 -ml-2 hover:bg-[#151A21] rounded-lg text-gray-400 hover:text-white transition-colors">
+                        <ArrowLeft className="w-5 h-5" />
+                    </Link>
+                    <div>
+                        <h1 className="text-xl md:text-2xl font-bold text-white leading-tight">{isEditMode ? 'Edit Quotation' : 'New Quotation'}</h1>
+                        <p className="hidden xs:block text-gray-400 text-[10px] md:text-sm">{isEditMode ? 'Update existing terms' : 'Prepare proposal for client'}</p>
                     </div>
-                    <p className="text-gray-400 pl-9">{isEditMode ? 'Modify existing quotation details' : 'Prepare a new quotation for client'}</p>
                 </div>
-                <Link to="/quotations" className="bg-[#151A21] border border-[#1F2937] hover:bg-[#1F2937] text-gray-300 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                <Link to="/quotations" className="bg-[#151A21] border border-[#1F2937] hover:bg-[#1F2937] text-gray-300 px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-colors text-center">
                     Back to List
                 </Link>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
                 {/* Main Form Area */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* Client Information */}
-                    <div className="bg-[#151A21] border border-[#1F2937] rounded-2xl p-6">
-                        <h2 className="text-lg font-semibold text-white mb-6">Client Information</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-xs font-medium text-gray-400 mb-1.5">Client Name *</label>
+                    <div className="bg-[#151A21] border border-[#1F2937] rounded-2xl p-4 md:p-6 shadow-xl">
+                        <h2 className="text-base md:text-lg font-bold text-white mb-4 md:mb-6 uppercase tracking-wider flex items-center gap-2">
+                            <div className="w-1 h-4 bg-blue-500 rounded-full" /> Client Information
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-widest">Client Name *</label>
                                 <input
                                     type="text"
                                     placeholder="Enter client name"
@@ -197,8 +199,8 @@ const CreateQuotation = () => {
                                     onChange={(e) => setClientInfo({ ...clientInfo, name: e.target.value })}
                                 />
                             </div>
-                            <div>
-                                <label className="block text-xs font-medium text-gray-400 mb-1.5">Contact Person</label>
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-widest">Contact Person</label>
                                 <input
                                     type="text"
                                     placeholder="Enter contact name"
@@ -207,8 +209,8 @@ const CreateQuotation = () => {
                                     onChange={(e) => setClientInfo({ ...clientInfo, contactPerson: e.target.value })}
                                 />
                             </div>
-                            <div>
-                                <label className="block text-xs font-medium text-gray-400 mb-1.5">Email</label>
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-widest">Email</label>
                                 <input
                                     type="email"
                                     placeholder="client@email.com"
@@ -217,8 +219,8 @@ const CreateQuotation = () => {
                                     onChange={(e) => setClientInfo({ ...clientInfo, email: e.target.value })}
                                 />
                             </div>
-                            <div>
-                                <label className="block text-xs font-medium text-gray-400 mb-1.5">Phone</label>
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-widest">Phone</label>
                                 <input
                                     type="text"
                                     placeholder="+1 234 567 8900"
@@ -231,11 +233,13 @@ const CreateQuotation = () => {
                     </div>
 
                     {/* Event Details */}
-                    <div className="bg-[#151A21] border border-[#1F2937] rounded-2xl p-6">
-                        <h2 className="text-lg font-semibold text-white mb-6">Event Details</h2>
-                        <div className="space-y-6">
-                            <div>
-                                <label className="block text-xs font-medium text-gray-400 mb-1.5">Event Name *</label>
+                    <div className="bg-[#151A21] border border-[#1F2937] rounded-2xl p-4 md:p-6 shadow-xl">
+                        <h2 className="text-base md:text-lg font-bold text-white mb-4 md:mb-6 uppercase tracking-wider flex items-center gap-2">
+                            <div className="w-1 h-4 bg-emerald-500 rounded-full" /> Event Details
+                        </h2>
+                        <div className="space-y-4 md:space-y-6">
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-widest">Event Name *</label>
                                 <input
                                     type="text"
                                     placeholder="Enter event name"
@@ -244,9 +248,9 @@ const CreateQuotation = () => {
                                     onChange={(e) => setEventDetails({ ...eventDetails, name: e.target.value })}
                                 />
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-400 mb-1.5">Event Date *</label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-widest">Event Date *</label>
                                     <div className="relative">
                                         <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                                         <input
@@ -257,8 +261,8 @@ const CreateQuotation = () => {
                                         />
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-400 mb-1.5">Event Location</label>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-widest">Event Location</label>
                                     <div className="relative">
                                         <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                                         <input
@@ -271,8 +275,8 @@ const CreateQuotation = () => {
                                     </div>
                                 </div>
                             </div>
-                            <div>
-                                <label className="block text-xs font-medium text-gray-400 mb-1.5">Description</label>
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-widest">Description</label>
                                 <textarea
                                     rows={3}
                                     placeholder="Event description"
@@ -285,21 +289,23 @@ const CreateQuotation = () => {
                     </div>
 
                     {/* Items & Services */}
-                    <div className="bg-[#151A21] border border-[#1F2937] rounded-2xl p-6">
+                    <div className="bg-[#151A21] border border-[#1F2937] rounded-2xl p-4 md:p-6 shadow-xl">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-lg font-semibold text-white">Items & Services</h2>
-                            <button onClick={addItem} className="text-blue-500 hover:text-blue-400 text-sm font-medium flex items-center gap-1">
-                                <Plus className="w-4 h-4" /> Add Item
+                            <h2 className="text-base md:text-lg font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                <div className="w-1 h-4 bg-purple-500 rounded-full" /> Equipment & Services
+                            </h2>
+                            <button onClick={addItem} className="bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-blue-600/20 flex items-center gap-1 transition-all">
+                                <Plus className="w-3.5 h-3.5" /> Add
                             </button>
                         </div>
 
                         <div className="space-y-4">
                             {items.map((item) => (
-                                <div key={item.id} className="grid grid-cols-12 gap-3 items-start animate-in slide-in-from-left-4 duration-300">
-                                    <div className="col-span-12 md:col-span-5">
-                                        <label className="block text-[10px] text-gray-500 mb-1 uppercase font-bold">Item Details</label>
+                                <div key={item.id} className="p-4 bg-[#0B0E14] border border-[#1F2937] md:border-none md:bg-transparent md:p-0 rounded-xl space-y-4 md:space-y-0 md:grid md:grid-cols-12 md:gap-3 md:items-start animate-in slide-in-from-left-4 duration-300">
+                                    <div className="md:col-span-12 lg:col-span-5">
+                                        <label className="block text-[10px] text-gray-500 mb-1 uppercase font-bold md:hidden">Resource / Service</label>
                                         <select
-                                            className="w-full bg-[#0B0E14] border border-[#1F2937] rounded-lg px-4 py-2.5 text-gray-200 text-sm focus:border-blue-500 outline-none appearance-none"
+                                            className="w-full bg-[#0B0E14] md:bg-[#0B0E14] border border-[#1F2937] rounded-lg px-3 py-2 text-gray-200 text-xs focus:border-blue-500 outline-none appearance-none"
                                             value={item.itemId}
                                             onChange={(e) => updateItem(item.id, 'itemId', e.target.value)}
                                         >
@@ -312,49 +318,55 @@ const CreateQuotation = () => {
                                             <input
                                                 type="text"
                                                 placeholder="Custom description"
-                                                className="w-full mt-2 bg-[#0B0E14] border border-[#1F2937] rounded-lg px-4 py-2 text-gray-200 text-xs focus:border-blue-500 outline-none"
+                                                className="w-full mt-2 bg-[#151A21] md:bg-[#0B0E14] border border-[#1F2937] rounded-lg px-3 py-2 text-gray-200 text-xs focus:border-blue-500 outline-none"
                                                 value={item.description}
                                                 onChange={(e) => updateItem(item.id, 'description', e.target.value)}
                                             />
                                         )}
                                         {item.itemId && item.quantity > item.available && (
-                                            <p className="text-[10px] text-red-400 mt-1 flex items-center gap-1">
-                                                <AlertCircle className="w-3 h-3" /> Exceeds current stock ({item.available})
+                                            <p className="text-[10px] text-red-400 mt-1 flex items-center gap-1 font-bold">
+                                                <AlertCircle className="w-3 h-3" /> Over Stock ({item.available})
                                             </p>
                                         )}
                                     </div>
-                                    <div className="col-span-4 md:col-span-2">
-                                        <label className="block text-[10px] text-gray-500 mb-1 uppercase font-bold">Qty</label>
-                                        <input
-                                            type="number"
-                                            placeholder="Qty"
-                                            className="w-full bg-[#0B0E14] border border-[#1F2937] rounded-lg px-4 py-2.5 text-gray-200 text-sm focus:border-blue-500 outline-none"
-                                            value={item.quantity}
-                                            onChange={(e) => updateItem(item.id, 'quantity', parseFloat(e.target.value))}
-                                        />
-                                    </div>
-                                    <div className="col-span-4 md:col-span-2">
-                                        <label className="block text-[10px] text-gray-500 mb-1 uppercase font-bold">Rate</label>
-                                        <input
-                                            type="number"
-                                            placeholder="Rate"
-                                            className="w-full bg-[#0B0E14] border border-[#1F2937] rounded-lg px-4 py-2.5 text-gray-200 text-sm focus:border-blue-500 outline-none"
-                                            value={item.rate}
-                                            onChange={(e) => updateItem(item.id, 'rate', parseFloat(e.target.value))}
-                                        />
-                                    </div>
-                                    <div className="col-span-4 md:col-span-3 flex items-end justify-between gap-2">
-                                        <div className="w-full">
-                                            <label className="block text-[10px] text-gray-500 mb-1 uppercase font-bold">Amount</label>
-                                            <div className="bg-[#0B0E14] border border-[#1F2937] rounded-lg px-3 py-2.5 text-gray-400 text-sm w-full text-right font-mono">
-                                                ${item.amount.toFixed(2)}
+
+                                    <div className="grid grid-cols-3 gap-3 md:grid-cols-7 md:col-span-12 lg:col-span-7">
+                                        <div className="md:col-span-2">
+                                            <label className="block text-[9px] text-gray-500 mb-1 uppercase font-bold">Qty</label>
+                                            <input
+                                                type="number"
+                                                placeholder="Qty"
+                                                className="w-full bg-[#151A21] md:bg-[#0B0E14] border border-[#1F2937] rounded-lg px-3 py-2.5 text-gray-200 text-xs focus:border-blue-500 outline-none font-mono"
+                                                value={item.quantity}
+                                                onChange={(e) => updateItem(item.id, 'quantity', parseFloat(e.target.value))}
+                                            />
+                                        </div>
+                                        <div className="md:col-span-2">
+                                            <label className="block text-[9px] text-gray-500 mb-1 uppercase font-bold">Rate</label>
+                                            <div className="relative">
+                                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500 font-bold">₹</span>
+                                                <input
+                                                    type="number"
+                                                    placeholder="Rate"
+                                                    className="w-full bg-[#151A21] md:bg-[#0B0E14] border border-[#1F2937] rounded-lg pl-5 pr-2 py-2.5 text-gray-200 text-xs focus:border-blue-500 outline-none font-mono"
+                                                    value={item.rate}
+                                                    onChange={(e) => updateItem(item.id, 'rate', parseFloat(e.target.value))}
+                                                />
                                             </div>
                                         </div>
-                                        {items.length > 1 && (
-                                            <button onClick={() => removeItem(item.id)} className="mb-2.5 p-2 text-gray-500 hover:text-red-500 transition-colors">
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        )}
+                                        <div className="md:col-span-3 flex items-end justify-between gap-2">
+                                            <div className="w-full">
+                                                <label className="block text-[9px] text-gray-500 mb-1 uppercase font-bold">Amount</label>
+                                                <div className="bg-[#151A21] md:bg-[#0B0E14] border border-[#1F2937] rounded-lg px-2 py-2.5 text-gray-200 text-xs w-full text-right font-black font-mono">
+                                                    ₹{item.amount.toLocaleString()}
+                                                </div>
+                                            </div>
+                                            {items.length > 1 && (
+                                                <button onClick={() => removeItem(item.id)} className="mb-2 p-1.5 bg-red-500/10 border border-red-500/20 text-red-500 rounded-lg hover:bg-red-500/20 transition-colors">
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -364,45 +376,45 @@ const CreateQuotation = () => {
 
                 {/* Sidebar Summary */}
                 <div className="lg:col-span-1">
-                    <div className="bg-[#151A21] border border-[#1F2937] rounded-2xl p-6 sticky top-6">
-                        <h2 className="text-lg font-semibold text-white mb-6">Summary</h2>
+                    <div className="bg-[#151A21] border border-[#1F2937] rounded-2xl p-4 md:p-6 sticky top-6 shadow-2xl">
+                        <h2 className="text-base md:text-lg font-bold text-white mb-6 uppercase tracking-wider">Proposal Summary</h2>
 
-                        <div className="space-y-3 mb-6 border-b border-[#1F2937] pb-6">
-                            <div className="flex justify-between text-sm text-gray-400">
-                                <span>Subtotal</span>
-                                <span>${subtotal.toFixed(2)}</span>
+                        <div className="space-y-4 mb-6 border-b border-[#1F2937] pb-6">
+                            <div className="flex justify-between text-xs md:text-sm">
+                                <span className="text-gray-500 font-bold uppercase">Subtotal</span>
+                                <span className="text-gray-300 font-mono">₹{subtotal.toLocaleString()}</span>
                             </div>
-                            <div className="flex justify-between text-sm text-gray-400">
-                                <span>Tax (10%)</span>
-                                <span>${tax.toFixed(2)}</span>
+                            <div className="flex justify-between text-xs md:text-sm">
+                                <span className="text-gray-500 font-bold uppercase">Tax (10%)</span>
+                                <span className="text-gray-300 font-mono">₹{tax.toLocaleString()}</span>
                             </div>
                         </div>
 
                         <div className="flex justify-between items-center mb-8">
-                            <span className="text-base font-semibold text-white">Total</span>
-                            <span className="text-2xl font-bold text-white">${total.toFixed(2)}</span>
+                            <span className="text-sm font-black text-gray-400 uppercase tracking-widest">Total Value</span>
+                            <span className="text-2xl font-black text-white font-mono">₹{total.toLocaleString()}</span>
                         </div>
 
                         <div className="space-y-4 mb-8">
-                            <div>
-                                <label className="block text-xs font-medium text-gray-400 mb-1.5">Valid Until</label>
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Quote Valid Until</label>
                                 <div className="relative">
                                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                                     <input
                                         type="date"
-                                        className="w-full bg-[#0B0E14] border border-[#1F2937] rounded-lg pl-10 pr-4 py-2.5 text-gray-200 text-sm focus:border-blue-500 outline-none [color-scheme:dark]"
+                                        className="w-full bg-[#0B0E14] border border-[#1F2937] rounded-lg pl-10 pr-4 py-2.5 text-gray-200 text-xs focus:border-blue-500 outline-none [color-scheme:dark]"
                                         value={validUntil}
                                         onChange={(e) => setValidUntil(e.target.value)}
                                     />
                                 </div>
                             </div>
-                            <div>
-                                <label className="block text-xs font-medium text-gray-400 mb-1.5">Payment Terms</label>
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Payment Terms</label>
                                 <div className="relative">
                                     <select
                                         value={paymentTerms}
                                         onChange={(e) => setPaymentTerms(e.target.value)}
-                                        className="w-full bg-[#0B0E14] border border-[#1F2937] rounded-lg px-4 py-2.5 text-gray-200 text-sm focus:border-blue-500 outline-none appearance-none"
+                                        className="w-full bg-[#0B0E14] border border-[#1F2937] rounded-lg px-4 py-2.5 text-gray-200 text-xs focus:border-blue-500 outline-none appearance-none"
                                     >
                                         <option>Net 30</option>
                                         <option>Net 15</option>
@@ -413,21 +425,23 @@ const CreateQuotation = () => {
                             </div>
                         </div>
 
-                        <button
-                            onClick={handleCreate}
-                            disabled={createMutation.isPending}
-                            className="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2 mb-3 shadow-lg shadow-blue-600/20 transition-all disabled:opacity-50"
-                        >
-                            <Send className="w-4 h-4" />
-                            {createMutation.isPending ? 'Sending...' : 'Send to Client'}
-                        </button>
-                        <button
-                            onClick={handleCreate} // Reuse create for now
-                            disabled={createMutation.isPending}
-                            className="w-full bg-[#0B0E14] border border-[#1F2937] hover:bg-[#1F2937] text-gray-300 py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors"
-                        >
-                            <Save className="w-4 h-4" /> Save as Draft
-                        </button>
+                        <div className="space-y-3">
+                            <button
+                                onClick={handleCreate}
+                                disabled={createMutation.isPending}
+                                className="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20 transition-all disabled:opacity-50"
+                            >
+                                <Send className="w-4 h-4" />
+                                {createMutation.isPending ? 'Sending...' : 'Send Proposal'}
+                            </button>
+                            <button
+                                onClick={handleCreate}
+                                disabled={createMutation.isPending}
+                                className="w-full bg-[#0B0E14] border border-[#1F2937] hover:bg-[#1F2937] text-gray-400 py-3 rounded-xl font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-colors"
+                            >
+                                <Save className="w-4 h-4" /> Save Draft
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

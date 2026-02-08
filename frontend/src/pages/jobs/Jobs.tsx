@@ -21,10 +21,21 @@ import { Plus, Calendar as CalendarIcon, MapPin, Users, AlertCircle, TrendingDow
 import { cn } from '../../lib/utils';
 import JobExpensesList from './components/JobExpensesList';
 import JobDiscussionHub from './components/JobDiscussionHub';
+import { settingsApi } from '../../services/settings.service';
+import { API_URL } from '../../services/api';
 
 const JobDetailsPanel = ({ job, isLoading, onClose, onEdit, onClone, onDelete }: { job: any; isLoading?: boolean; onClose: () => void; onEdit: () => void; onClone: () => void; onDelete: () => void }) => {
     const { user } = useSelector((state: RootState) => state.auth);
     const isAdmin = user?.role !== 'EMPLOYEE';
+    const { data: companyProfile } = useQuery({
+        queryKey: ['company-profile'],
+        queryFn: async () => {
+            const data = await settingsApi.getCompanyProfile();
+            return data;
+        },
+        staleTime: Infinity,
+        retry: false
+    });
     const [activeTab, setActiveTab] = useState<'details' | 'expenses' | 'workers' | 'items' | 'discussion'>('details');
 
     if (!job) return null;
@@ -64,98 +75,259 @@ const JobDetailsPanel = ({ job, isLoading, onClose, onEdit, onClone, onDelete }:
                         onClick={() => {
                             const printWindow = window.open('', '_blank');
                             if (printWindow) {
+                                const logoSrc = companyProfile?.logoUrl
+                                    ? (companyProfile.logoUrl.startsWith('http') || companyProfile.logoUrl.startsWith('data:image')
+                                        ? companyProfile.logoUrl
+                                        : `${API_URL}${companyProfile.logoUrl}`)
+                                    : '';
+
                                 printWindow.document.write(`
-                                    <html>
-                                    <head>
-                                        <title>Call Sheet - ${job.title}</title>
-                                        <style>
-                                            body { font-family: system-ui, -apple-system, sans-serif; color: #1a1a1a; line-height: 1.5; padding: 40px; max-width: 800px; mx-auto; }
-                                            .header { display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 30px; }
-                                            .title { font-size: 24px; font-weight: 900; text-transform: uppercase; margin: 0; }
-                                            .meta { font-size: 14px; color: #666; margin-top: 5px; }
-                                            .badge { background: #000; color: #fff; padding: 4px 8px; font-size: 12px; font-weight: bold; text-transform: uppercase; border-radius: 4px; }
-                                            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; }
-                                            .section { margin-bottom: 30px; }
-                                            .section-title { font-size: 14px; font-weight: 900; text-transform: uppercase; border-bottom: 1px solid #ddd; padding-bottom: 8px; margin-bottom: 16px; color: #444; }
-                                            .info-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
-                                            .info-label { font-weight: 600; color: #666; }
-                                            .table { width: 100%; border-collapse: collapse; font-size: 13px; }
-                                            .table th { text-align: left; border-bottom: 1px solid #000; padding: 8px 4px; font-weight: 900; text-transform: uppercase; font-size: 11px; }
-                                            .table td { border-bottom: 1px solid #eee; padding: 8px 4px; }
-                                            .checkbox { width: 16px; height: 16px; border: 1px solid #ccc; display: inline-block; margin-right: 8px; vertical-align: middle; }
-                                            @media print { body { padding: 0; } .no-print { display: none; } }
-                                        </style>
-                                    </head>
-                                    <body>
-                                        <div class="header">
-                                            <div>
-                                                <div style="display:flex; align-items:center; gap: 10px; margin-bottom: 10px;">
-                                                    <span class="badge">Event Call Sheet</span>
-                                                    <span style="font-size: 12px; font-weight: 600; color: #666;">#${job.id.slice(0, 8)}</span>
-                                                </div>
-                                                <h1 class="title">${job.title}</h1>
-                                                <p class="meta">Client: ${job.client}</p>
-                                            </div>
-                                            <div style="text-align: right;">
-                                                <div style="font-size: 32px; font-weight: 900; letter-spacing: -1px;">${new Date(job.date).getDate()}</div>
-                                                <div style="text-transform: uppercase; font-weight: 900; color: #666;">${new Date(job.date).toLocaleString('default', { month: 'short', year: 'numeric' })}</div>
-                                            </div>
-                                        </div>
+                            <html>
+                            <head>
+                            <style>
+                                body {
+                                font-family: system-ui, -apple-system, sans-serif;
+                                color: #1a1a1a;
+                                line-height: 1.5;
+                                padding: 40px;
+                                max-width: 900px;
+                                margin: 0 auto;
+                                }
 
-                                        <div class="grid">
-                                            <div>
-                                                <div class="section-title">Logistics</div>
-                                                <div class="info-row"><span class="info-label">Location:</span> <span>${job.location}</span></div>
-                                                <div class="info-row"><span class="info-label">Duration:</span> <span>${job.duration || 'Full Day'}</span></div>
-                                                <div class="info-row"><span class="info-label">Start Time:</span> <span>${job.time || 'TBD'}</span></div>
-                                                <div style="margin-top: 15px; font-size: 13px; font-style: italic; color: #555;">
-                                                    <strong>Notes:</strong><br/>
-                                                    ${job.description || 'No specific notes provided.'}
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <div class="section-title">Crew Roster</div>
-                                                <table class="table">
-                                                    <thead><tr><th>Name</th><th>Role</th><th>Contact</th></tr></thead>
-                                                    <tbody>
-                                                        ${(job.requests || []).map((req: any) => `
-                                                            <tr>
-                                                                <td style="font-weight: 600;">${req.employee?.firstName} ${req.employee?.lastName}</td>
-                                                                <td>Tech</td>
-                                                                <td>${req.employee?.phone || '-'}</td>
-                                                            </tr>
-                                                        `).join('')}
-                                                        ${(job.requests || []).length === 0 ? '<tr><td colspan="3" style="text-align:center; color:#999; padding:20px;">No crew assigned yet</td></tr>' : ''}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
+                                /* ===== HEADER ===== */
+                                .header {
+                                display: grid;
+                                grid-template-columns: 1fr 2fr 1fr;
+                                align-items: center;
+                                padding-bottom: 16px;
+                                }
 
-                                        <div class="section">
-                                            <div class="section-title">Equipment Packing List</div>
-                                            <table class="table">
-                                                <thead><tr><th width="30">Chk</th><th>Item Name</th><th>Qty</th><th>Status</th></tr></thead>
-                                                <tbody>
-                                                    ${(job.checkouts || []).map((checkout: any) => `
-                                                        <tr>
-                                                            <td><span class="checkbox"></span></td>
-                                                            <td style="font-weight: 600;">${checkout.item?.name}</td>
-                                                            <td>${checkout.quantity}</td>
-                                                            <td>${checkout.status === 'CHECKED_OUT' ? 'Packed' : checkout.status}</td>
-                                                        </tr>
-                                                    `).join('')}
-                                                    ${(job.checkouts || []).length === 0 ? '<tr><td colspan="4" style="text-align:center; color:#999; padding:20px;">No equipment list generated</td></tr>' : ''}
-                                                </tbody>
-                                            </table>
-                                        </div>
+                                .header-left {
+                                text-align: left;
+                                }
 
-                                        <div style="margin-top: 50px; border-top: 1px solid #eee; padding-top: 20px; font-size: 11px; color: #999; text-align: center;">
-                                            Generated by LS Manager • ${new Date().toLocaleString()}
-                                        </div>
-                                        <script>window.print();</script>
-                                    </body>
-                                    </html>
-                                `);
+                                .header-center {
+                                text-align: center;
+                                }
+
+                                .header-right {
+                                text-align: right;
+                                }
+
+                                /* LOGO */
+                                .company-logo {
+                                max-height: 80px;
+                                max-width: 200px;
+                                object-fit: contain;
+                                }
+
+                                /* COMPANY NAME */
+                                .company-name {
+                                font-size: 22px;
+                                font-weight: 900;
+                                text-transform: uppercase;
+                                letter-spacing: 1.5px;
+                                margin: 0;
+                                }
+
+                                .company-location {
+                                font-size: 12px;
+                                color: #555;
+                                }
+
+                                /* DATE STYLE (PRODUCTION STYLE BIG DAY) */
+                                .date-day {
+                                font-size: 36px;
+                                font-weight: 900;
+                                line-height: 1;
+                                }
+
+                                .date-month {
+                                font-size: 11px;
+                                font-weight: 700;
+                                text-transform: uppercase;
+                                color: #666;
+                                }
+
+
+                                .divider {
+                                border-bottom: 3px solid #000;
+                                margin: 20px 0 30px;
+                                }
+
+
+                                /* ===== EVENT INFO ===== */
+                                .event-block {
+                                margin-bottom: 36px;
+                                }
+
+                                .event-title {
+                                font-size: 22px;
+                                font-weight: 900;
+                                text-transform: uppercase;
+                                margin-bottom: 6px;
+                                }
+
+                                .event-location {
+                                font-size: 14px;
+                                color: #555;
+                                }
+
+                                /* ===== CONTENT ===== */
+                                .grid {
+                                display: grid;
+                                grid-template-columns: 1fr 1fr;
+                                gap: 56px;
+                                margin-bottom: 36px;
+                                }
+
+                                .section-title {
+                                font-size: 12px;
+                                font-weight: 800;
+                                text-transform: uppercase;
+                                color: #333;
+                                border-bottom: 1px solid #ddd;
+                                padding-bottom: 8px;
+                                margin-bottom: 14px;
+                                }
+
+                                .info-row {
+                                display: flex;
+                                justify-content: space-between;
+                                margin-bottom: 10px;
+                                font-size: 14px;
+                                }
+
+                                .info-label {
+                                font-weight: 600;
+                                color: #555;
+                                }
+
+                                .info-value {
+                                text-align: right;
+                                font-weight: 500;
+                                }
+
+                                /* ===== TABLES ===== */
+                                table {
+                                width: 100%;
+                                border-collapse: collapse;
+                                font-size: 13px;
+                                }
+
+                                th {
+                                text-align: left;
+                                font-size: 11px;
+                                text-transform: uppercase;
+                                font-weight: 800;
+                                padding-bottom: 8px;
+                                border-bottom: 1px solid #000;
+                                }
+
+                                td {
+                                padding: 8px 0;
+                                border-bottom: 1px solid #eee;
+                                }
+
+                                .equipment {
+                                margin-top: 36px;
+                                }
+
+                                .checkbox {
+                                width: 16px;
+                                height: 16px;
+                                border: 1.5px solid #aaa;
+                                border-radius: 3px;
+                                display: inline-block;
+                                }
+
+                                @media print {
+                                    @page { margin: 0; }
+                                    body { padding: 40px; margin: 0; }
+                                }
+                            </style>
+                            </head>
+
+                            <body>
+                            <!-- HEADER -->
+                            <div class="header">
+  <!-- LEFT: LOGO -->
+  <div class="header-left">
+    ${logoSrc ? `<img src="${logoSrc}" class="company-logo" />` : ''}
+  </div>
+
+  <!-- CENTER: COMPANY NAME -->
+  <div class="header-center">
+    <div class="company-name">${companyProfile?.companyName || 'LS EVENT MANAGER'}</div>
+    <div class="company-location">
+      ${companyProfile?.city || ''}${companyProfile?.state ? ', ' + companyProfile.state : ''}
+      ${companyProfile?.postalCode ? '<br>' + companyProfile.postalCode : ''}
+    </div>
+  </div>
+
+  <!-- RIGHT: DATE -->
+  <div class="header-right">
+    <div class="date-day">${new Date(job.date).toLocaleDateString('en-GB', { day: '2-digit' })}</div>
+    <div class="date-month">
+      ${new Date(job.date).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}
+    </div>
+  </div>
+</div>
+
+
+                            <div class="divider"></div>
+
+                            <!-- EVENT INFO -->
+                            <div class="event-block" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                                <div>
+                                    <div style="font-size: 14px; margin-bottom: 8px;">
+                                        <span style="font-weight: 600; min-width: 80px; display: inline-block;">Event:</span> 
+                                        <span>${job.title}</span>
+                                    </div>
+                                    <div style="font-size: 14px;">
+                                        <span style="font-weight: 600; min-width: 80px; display: inline-block;">Customer:</span> 
+                                        <span>${job.client || 'N/A'}</span>
+                                    </div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 14px; margin-bottom: 8px;">
+                                        <span style="font-weight: 600; margin-right: 8px;">Date:</span> 
+                                        <span>${new Date(job.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                                    </div>
+                                    <div style="font-size: 14px;">
+                                        <span style="font-weight: 600; margin-right: 8px;">Place:</span> 
+                                        <span>${job.location}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="equipment">
+                                <div class="section-title">Equipment Packing List</div>
+                                <table>
+                                <thead>
+                                    <tr><th width="40">Chk</th><th>Item</th><th width="80">Qty</th><th width="100">Status</th></tr>
+                                </thead>
+                                <tbody>
+                                    ${(job.checkouts || []).map((c: any) => `
+                                    <tr>
+                                        <td><span class="checkbox"></span></td>
+                                        <td><strong>${c.item?.name}</strong></td>
+                                        <td>${c.quantity}</td>
+                                        <td>${c.status === 'CHECKED_OUT' ? 'Packed' : c.status}</td>
+                                    </tr>
+                                    `).join('') || `
+                                    <tr><td colspan="4" style="text-align:center; color:#999; padding:16px;">No equipment listed</td></tr>
+                                    `}
+                                </tbody>
+                                </table>
+                            </div>
+
+                            <script>window.print();</script>
+                            </body>
+                            </html>
+                            `);
+
+
                                 printWindow.document.close();
                             }
                         }}
@@ -782,9 +954,9 @@ const Jobs = () => {
     }
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500 pb-10 h-[calc(100vh-8rem)]">
+        <div className="space-y-6 animate-in fade-in duration-500 p-6 lg:p-8 max-w-[1600px] mx-auto h-[calc(100vh-4rem)] flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between shrink-0">
                 <div>
                     <h1 className="text-3xl font-bold text-white mb-2">Job Scheduling</h1>
                     <p className="text-gray-400">Plan and manage your event schedule</p>
@@ -799,9 +971,9 @@ const Jobs = () => {
                 )}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
                 {/* Calendar Section */}
-                <div className="lg:col-span-2 bg-[#151A21] border border-[#1F2937] rounded-2xl p-6 flex flex-col h-[700px]">
+                <div className="lg:col-span-2 bg-[#151A21] border border-[#1F2937] rounded-2xl p-6 flex flex-col h-full overflow-hidden">
                     <DnDCalendar
                         localizer={localizer}
                         events={events} // Use memoized events
@@ -819,7 +991,7 @@ const Jobs = () => {
                         onView={handleViewChange}
 
                         views={[Views.MONTH, Views.WEEK, Views.DAY, Views.AGENDA]}
-                        className="text-gray-300"
+                        className="text-gray-300 flex-1"
                         eventPropGetter={() => ({
                             className: `!bg-blue-600/20 !border-blue-600/30 !text-blue-400 !rounded-md !text-xs !px-2 !py-1`,
                             style: {
@@ -832,7 +1004,7 @@ const Jobs = () => {
                 </div>
 
                 {/* Sidebar / Details */}
-                <div className="lg:col-span-1 h-[700px]">
+                <div className="lg:col-span-1 h-full flex flex-col min-h-0">
                     {selectedJob ? (
                         <JobDetailsPanel
                             job={fullJobDetails || selectedJob}

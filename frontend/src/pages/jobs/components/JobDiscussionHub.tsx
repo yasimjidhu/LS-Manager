@@ -106,14 +106,14 @@ const JobDiscussionHub = ({ jobId, jobTitle }: JobDiscussionHubProps) => {
         <div className="flex flex-col h-full min-h-0 bg-[#0B0E14] rounded-2xl border border-[#1F2937] overflow-hidden">
             {/* Thread Header */}
             <div className="p-3 bg-blue-600/10 border-b border-blue-600/20 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <Info className="w-4 h-4 text-blue-400" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-blue-400">
+                <div className="flex items-center gap-1.5 md:gap-2">
+                    <Info className="w-3.5 h-3.5 md:w-4 md:h-4 text-blue-400" />
+                    <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-blue-400 truncate max-w-[150px] md:max-w-none">
                         {jobTitle ? `${jobTitle} Group` : 'Crew Discussion Hub'}
                     </span>
                 </div>
-                <div className="text-[10px] text-gray-500 font-bold uppercase">
-                    {messages?.length || 0} Updates
+                <div className="text-[9px] md:text-[10px] text-gray-400 font-bold uppercase whitespace-nowrap">
+                    {messages?.length || 0} UPDATES
                 </div>
             </div>
 
@@ -129,13 +129,13 @@ const JobDiscussionHub = ({ jobId, jobTitle }: JobDiscussionHubProps) => {
                     </div>
                 ) : (
                     messages?.map((msg) => (
-                        <div className={cn(
-                            "flex gap-3 max-w-[85%]",
+                        <div key={msg.id} className={cn(
+                            "flex gap-2 md:gap-3 max-w-[90%] md:max-w-[85%]",
                             msg.user.email === user?.email ? "ml-auto flex-row-reverse" : "flex-row"
                         )}>
                             {/* Avatar */}
                             <div className={cn(
-                                "flex-shrink-0 w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-[10px] font-black uppercase tracking-tighter shadow-xl",
+                                "flex-shrink-0 w-7 h-7 md:w-8 md:h-8 rounded-full border border-white/10 flex items-center justify-center text-[9px] md:text-[10px] font-black uppercase tracking-tighter shadow-xl",
                                 msg.user.email === user?.email
                                     ? "bg-blue-600/40 text-blue-200"
                                     : "bg-[#1F2937] text-gray-300"
@@ -144,16 +144,16 @@ const JobDiscussionHub = ({ jobId, jobTitle }: JobDiscussionHubProps) => {
                             </div>
 
                             <div className={cn(
-                                "flex flex-col",
+                                "flex flex-col min-w-0",
                                 msg.user.email === user?.email ? "items-end" : "items-start"
                             )}>
-                                <div className="flex items-center gap-2 mb-1 px-1">
-                                    <span className="text-[9px] font-bold text-gray-500 uppercase">{msg.user.email.split('@')[0]}</span>
-                                    <span className="text-[9px] text-gray-600 font-mono">{moment(msg.createdAt).fromNow()}</span>
+                                <div className="flex items-center gap-2 mb-0.5 md:mb-1 px-1">
+                                    <span className="text-[8px] md:text-[9px] font-bold text-gray-500 uppercase truncate max-w-[80px] md:max-w-none">{msg.user.email.split('@')[0]}</span>
+                                    <span className="text-[8px] md:text-[9px] text-gray-600 font-mono whitespace-nowrap">{moment(msg.createdAt).fromNow()}</span>
                                 </div>
 
                                 <div className={cn(
-                                    "p-3 rounded-2xl text-sm relative group transition-all hover:ring-1 hover:ring-white/5",
+                                    "p-2.5 md:p-3 rounded-2xl text-[12px] md:text-sm relative group transition-all hover:ring-1 hover:ring-white/5",
                                     msg.user.email === user?.email
                                         ? "bg-blue-600 text-white rounded-tr-none"
                                         : "bg-[#151A21] border border-[#1F2937] text-gray-200 rounded-tl-none"
@@ -163,7 +163,7 @@ const JobDiscussionHub = ({ jobId, jobTitle }: JobDiscussionHubProps) => {
                                             <img
                                                 src={msg.imageUrl}
                                                 alt="Site clip"
-                                                className="max-w-full h-auto max-h-[300px] object-contain cursor-zoom-in hover:scale-[1.02] transition-transform"
+                                                className="max-w-full h-auto max-h-[250px] md:max-h-[300px] object-contain cursor-zoom-in hover:scale-[1.02] transition-transform"
                                                 onClick={() => window.open(msg.imageUrl, '_blank')}
                                             />
                                         </div>
@@ -173,9 +173,9 @@ const JobDiscussionHub = ({ jobId, jobTitle }: JobDiscussionHubProps) => {
                                     {msg.user.email === user?.email && (
                                         <button
                                             onClick={() => deleteMutation.mutate(msg.id)}
-                                            className="absolute -left-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1 text-gray-600 hover:text-red-500"
+                                            className="absolute -left-6 md:-left-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1 text-gray-600 hover:text-red-500"
                                         >
-                                            <Trash2 className="w-3.5 h-3.5" />
+                                            <Trash2 className="w-3 md:w-3.5 h-3 md:h-3.5" />
                                         </button>
                                     )}
                                 </div>

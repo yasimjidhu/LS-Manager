@@ -9,7 +9,7 @@ import { useState } from 'react';
 import api from '../../services/api';
 import { useAlert, useConfirm } from '../../components/ui';
 import JobDiscussionHub from './components/JobDiscussionHub';
-import { CardSkeleton, StatCardSkeleton } from '../../components/ui';
+import { CardSkeleton, StatCardSkeleton, Pagination } from '../../components/ui';
 
 const StatCard = ({
     title,
@@ -23,13 +23,13 @@ const StatCard = ({
     color: string;
 }) => {
     return (
-        <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-4 flex items-center justify-between">
+        <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-4 md:p-5 flex items-center justify-between group hover:border-[#374151] transition-all">
             <div>
-                <p className="text-xs font-medium text-gray-400 mb-0.5">{title}</p>
-                <h3 className="text-xl font-bold text-white">{value}</h3>
+                <p className="text-xs md:text-sm font-medium text-gray-400 mb-0.5">{title}</p>
+                <h3 className="text-xl md:text-2xl font-bold text-white">{value}</h3>
             </div>
-            <div className={cn("p-2 rounded-lg bg-opacity-10", color.replace('text-', 'bg-'))}>
-                <Icon className={cn("w-5 h-5", color)} />
+            <div className={cn("p-2 md:p-3 rounded-lg bg-opacity-10", color.replace('text-', 'bg-'))}>
+                <Icon className={cn("w-5 h-5 md:w-6 md:h-6", color)} />
             </div>
         </div>
     );
@@ -71,13 +71,13 @@ const JobCard = ({ job, onStatusUpdate, onViewDetails, onRequestJoin, user }: { 
 
     return (
         <div className={cn(
-            "bg-[#151A21] border rounded-xl p-5 transition-all group flex flex-col h-full relative overflow-hidden",
+            "bg-[#151A21] border rounded-xl p-3 md:p-4 transition-all group flex flex-col h-full relative overflow-hidden",
             myRequest ? "border-cyan-500/30 bg-cyan-950/5" : "border-[#1F2937] hover:border-gray-600"
         )}>
             {/* Status Indicators in Top Right */}
             <div className="absolute top-0 right-0 flex flex-col items-end">
                 {job.status === 'COMPLETED' && (
-                    <div className="bg-emerald-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider mb-0.5">
+                    <div className="bg-emerald-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-bl-md uppercase tracking-wider mb-0.5">
                         COMPLETED
                     </div>
                 )}
@@ -97,8 +97,8 @@ const JobCard = ({ job, onStatusUpdate, onViewDetails, onRequestJoin, user }: { 
 
             <div className="flex justify-between items-start mb-3">
                 <div className="flex-1 min-w-0 pr-12">
-                    <h3 className="text-base font-bold text-white truncate">{job.title}</h3>
-                    <p className="text-xs text-gray-400 truncate">{job.client}</p>
+                    <h3 className="text-base md:text-lg font-bold text-white truncate group-hover:text-cyan-400 transition-colors">{job.title}</h3>
+                    <p className="text-xs md:text-sm text-gray-400 truncate">{job.client}</p>
                 </div>
             </div>
 
@@ -117,8 +117,8 @@ const JobCard = ({ job, onStatusUpdate, onViewDetails, onRequestJoin, user }: { 
 
             {/* Crew Progress Bar */}
             <div className="mb-4">
-                <div className="flex justify-between text-[10px] uppercase font-bold text-gray-500 mb-1.5">
-                    <span className="flex items-center gap-1"><Users className="w-3 h-3" /> Crew Capacity</span>
+                <div className="flex justify-between text-[10px] md:text-xs uppercase font-bold text-gray-500 mb-1.5">
+                    <span className="flex items-center gap-1"><Users className="w-3 h-3 md:w-3.5 md:h-3.5" /> Crew Capacity</span>
                     <span className={cn(isFull ? "text-red-400" : "text-emerald-400")}>
                         {approvedCount} / {required}
                     </span>
@@ -141,9 +141,9 @@ const JobCard = ({ job, onStatusUpdate, onViewDetails, onRequestJoin, user }: { 
                 {user?.role !== 'EMPLOYEE' && (job.status === 'PLANNED' || job.status === 'PENDING') && (
                     <button
                         onClick={() => onStatusUpdate(job.id, 'ONGOING')}
-                        className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
+                        className="flex-1 py-2 md:py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs md:text-sm font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
                     >
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Start
+                        <CheckCircle2 className="w-3.5 h-3.5 md:w-4 md:h-4" /> Start
                     </button>
                 )}
 
@@ -206,7 +206,7 @@ const JobCard = ({ job, onStatusUpdate, onViewDetails, onRequestJoin, user }: { 
 
                 <button
                     onClick={() => onViewDetails(job)}
-                    className="px-3 py-2 bg-[#0B0E14] hover:bg-[#1F2937] border border-[#1F2937] text-gray-400 text-xs font-medium rounded-lg transition-colors"
+                    className="px-3 md:px-4 py-2 md:py-2.5 bg-[#0B0E14] hover:bg-[#1F2937] border border-[#1F2937] text-gray-400 text-xs md:text-sm font-medium rounded-lg transition-colors"
                 >
                     Details
                 </button>
@@ -227,14 +227,28 @@ const MyJobs = () => {
 
     // Filters
     const [dateFilter, setDateFilter] = useState<string>('');
+    const [page, setPage] = useState(1);
+    const limit = 12;
 
     const { data: jobsData, isLoading, error } = useQuery({
-        queryKey: ['my-jobs'],
-        queryFn: () => JobsService.getAll({ limit: 1000 })
+        queryKey: ['my-jobs', page, dateFilter, viewMode],
+        queryFn: () => JobsService.getAll({
+            page,
+            limit,
+            date: dateFilter || undefined,
+            viewMode: user?.role === 'EMPLOYEE' ? viewMode : undefined
+        })
     });
 
-    // Extract jobs safely from paginated response
     const jobs = jobsData?.data || [];
+    const meta = jobsData?.meta || { total: 0, totalPages: 0 };
+
+    const { data: statsData } = useQuery({
+        queryKey: ['job-stats'],
+        queryFn: JobsService.getStats
+    });
+
+    const stats = statsData || { planned: 0, ongoing: 0, completed: 0, total: 0 };
 
     const updateStatusMutation = useMutation({
         mutationFn: ({ id, status }: { id: string; status: string }) =>
@@ -287,49 +301,14 @@ const MyJobs = () => {
         }
     };
 
-    // Filter Logic
-    const filteredJobs = jobs?.filter((job: any) => {
-        // 1. Basic Filters
-        let matchesDate = true;
-        if (dateFilter) {
-            const jobDate = job.startDate || job.date;
-            matchesDate = jobDate === dateFilter;
-        }
-        if (!matchesDate) return false;
+    const handleViewModeChange = (mode: 'BROWSE' | 'APPLICATIONS' | 'SCHEDULE') => {
+        setViewMode(mode);
+        setPage(1);
+    };
 
-        // 2. View Mode Filters (Only for Employees)
-        if (user?.role === 'EMPLOYEE') {
-            const currentUser = user as any;
-            const myRequest = job.requests?.find((r: any) =>
-                (currentUser?.employee?.id && r.employeeId === currentUser.employee.id) ||
-                (r.employee?.userId === user?.id)
-            );
-
-            if (viewMode === 'BROWSE') {
-                // Show jobs I haven't joined/requested AND that are available
-                // Actually, maybe show all valid upcoming jobs?
-                // User said "understand which are available".
-                // Let's hide ones I'm already part of to avoid clutter, or show them?
-                // Let's show jobs NOT in my schedule/applications to keep "Browse" purely for "New"
-                return !myRequest && (job.status === 'PLANNED' || job.status === 'PENDING');
-            }
-            if (viewMode === 'APPLICATIONS') {
-                return myRequest && (myRequest.status === 'PENDING' || myRequest.status === 'REJECTED');
-            }
-            if (viewMode === 'SCHEDULE') {
-                return myRequest && myRequest.status === 'APPROVED';
-            }
-        }
-
-        return true;
-    }) || [];
-
-    // Calculate stats (General stats, maybe less relevant for Employee specific views but good to keep)
-    const stats = {
-        planned: jobs?.filter((j: any) => j.status === 'PLANNED').length || 0,
-        ongoing: jobs?.filter((j: any) => j.status === 'ONGOING').length || 0,
-        completed: jobs?.filter((j: any) => j.status === 'COMPLETED').length || 0,
-        total: jobs?.length || 0
+    const handleDateFilterChange = (val: string) => {
+        setDateFilter(val);
+        setPage(1);
     };
 
     if (isLoading) {
@@ -372,12 +351,12 @@ const MyJobs = () => {
             'Job Opportunities';
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+        <div className="space-y-4 md:space-y-6 animate-in fade-in duration-500 pb-20 p-4 md:p-6 lg:p-8 max-w-screen-2xl mx-auto">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-white mb-1">{headerText}</h1>
-                    <p className="text-gray-400 text-sm">
+                    <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-white mb-1">{headerText}</h1>
+                    <p className="text-gray-400 text-xs md:text-sm">
                         {user?.role === 'EMPLOYEE' ? 'Find and manage your work schedule' : 'Manage company events'}
                     </p>
                 </div>
@@ -389,10 +368,10 @@ const MyJobs = () => {
                             type="date"
                             className="bg-[#151A21] border border-[#1F2937] text-gray-300 text-sm rounded-lg block w-full pl-3 pr-10 py-2.5 outline-none focus:border-cyan-500 transition-colors"
                             value={dateFilter}
-                            onChange={(e) => setDateFilter(e.target.value)}
+                            onChange={(e) => handleDateFilterChange(e.target.value)}
                         />
                         {dateFilter && (
-                            <button onClick={() => setDateFilter('')} className="absolute right-8 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"><X className="w-3 h-3" /></button>
+                            <button onClick={() => handleDateFilterChange('')} className="absolute right-8 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"><X className="w-3 h-3" /></button>
                         )}
                         <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
                     </div>
@@ -400,53 +379,57 @@ const MyJobs = () => {
             </div>
 
             {/* Employee View Mode Tabs */}
-            {user?.role === 'EMPLOYEE' && (
-                <div className="flex p-1 bg-[#151A21] border border-[#1F2937] rounded-xl w-full max-w-md">
-                    <button
-                        onClick={() => setViewMode('BROWSE')}
-                        className={cn(
-                            "flex-1 py-2 text-xs font-bold rounded-lg transition-all",
-                            viewMode === 'BROWSE' ? "bg-cyan-600 text-white shadow-lg" : "text-gray-400 hover:text-white"
-                        )}
-                    >
-                        Browse Openings
-                    </button>
-                    <button
-                        onClick={() => setViewMode('APPLICATIONS')}
-                        className={cn(
-                            "flex-1 py-2 text-xs font-bold rounded-lg transition-all",
-                            viewMode === 'APPLICATIONS' ? "bg-cyan-600 text-white shadow-lg" : "text-gray-400 hover:text-white"
-                        )}
-                    >
-                        My Applications
-                    </button>
-                    <button
-                        onClick={() => setViewMode('SCHEDULE')}
-                        className={cn(
-                            "flex-1 py-2 text-xs font-bold rounded-lg transition-all",
-                            viewMode === 'SCHEDULE' ? "bg-cyan-600 text-white shadow-lg" : "text-gray-400 hover:text-white"
-                        )}
-                    >
-                        My Schedule
-                    </button>
-                </div>
-            )}
+            {
+                user?.role === 'EMPLOYEE' && (
+                    <div className="flex p-1 bg-[#151A21] border border-[#1F2937] rounded-xl w-full max-w-md">
+                        <button
+                            onClick={() => handleViewModeChange('BROWSE')}
+                            className={cn(
+                                "flex-1 py-1 px-3 text-xs font-bold rounded-lg transition-all",
+                                viewMode === 'BROWSE' ? "bg-cyan-600 text-white shadow-lg" : "text-gray-400 hover:text-white"
+                            )}
+                        >
+                            Browse Openings
+                        </button>
+                        <button
+                            onClick={() => handleViewModeChange('APPLICATIONS')}
+                            className={cn(
+                                "flex-1 py-1 px-3 text-xs font-bold rounded-lg transition-all",
+                                viewMode === 'APPLICATIONS' ? "bg-cyan-600 text-white shadow-lg" : "text-gray-400 hover:text-white"
+                            )}
+                        >
+                            My Applications
+                        </button>
+                        <button
+                            onClick={() => handleViewModeChange('SCHEDULE')}
+                            className={cn(
+                                "flex-1 py-1 px-3 text-xs font-bold rounded-lg transition-all",
+                                viewMode === 'SCHEDULE' ? "bg-cyan-600 text-white shadow-lg" : "text-gray-400 hover:text-white"
+                            )}
+                        >
+                            My Schedule
+                        </button>
+                    </div>
+                )
+            }
 
             {/* Quick Stats Row - Hide for Employee if in specific modes? Or keep for overview */}
-            {user?.role !== 'EMPLOYEE' && (
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <StatCard title="Total Assigned" value={stats.total.toString()} icon={Box} color="text-gray-400" />
-                    <StatCard title="Pending Start" value={stats.planned.toString()} icon={Clock} color="text-blue-500" />
-                    <StatCard title="In Progress" value={stats.ongoing.toString()} icon={MapPin} color="text-amber-500" />
-                    <StatCard title="Completed" value={stats.completed.toString()} icon={CheckCircle2} color="text-emerald-500" />
-                </div>
-            )}
+            {
+                user?.role !== 'EMPLOYEE' && (
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <StatCard title="Total Assigned" value={stats.total.toString()} icon={Box} color="text-gray-400" />
+                        <StatCard title="Pending Start" value={stats.planned.toString()} icon={Clock} color="text-blue-500" />
+                        <StatCard title="In Progress" value={stats.ongoing.toString()} icon={MapPin} color="text-amber-500" />
+                        <StatCard title="Completed" value={stats.completed.toString()} icon={CheckCircle2} color="text-emerald-500" />
+                    </div>
+                )
+            }
 
             {/* Content Grid */}
             <div className="mt-4">
-                {filteredJobs.length > 0 ? (
+                {jobs.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                        {filteredJobs.map((job: any) => (
+                        {jobs.map((job: any) => (
                             <JobCard
                                 key={job.id}
                                 job={job}
@@ -472,6 +455,18 @@ const MyJobs = () => {
                         </p>
                     </div>
                 )}
+            </div>
+
+            {/* Pagination */}
+            <div className="mt-8 flex justify-center">
+                <Pagination
+                    currentPage={page}
+                    totalPages={meta.totalPages}
+                    onPageChange={(p) => {
+                        setPage(p);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                />
             </div>
 
             {/* Details Modal */}
@@ -533,8 +528,8 @@ const JobDetailsModal = ({ job, onClose }: { job: any; onClose: () => void }) =>
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="bg-[#151A21] border border-[#1F2937] rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden relative flex flex-col max-h-[90vh]">
-                <div className="p-6 pb-0">
+            <div className="bg-[#151A21] border border-[#1F2937] rounded-xl w-full max-w-lg shadow-2xl overflow-hidden relative flex flex-col max-h-[90vh]">
+                <div className="p-4 pb-0">
                     <button
                         onClick={onClose}
                         className="absolute top-4 right-4 p-2 hover:bg-[#1F2937] rounded-lg transition-colors text-gray-400 z-10"

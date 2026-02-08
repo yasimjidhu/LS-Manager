@@ -13,7 +13,7 @@ import { cn } from '../../lib/utils';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../store';
 import { useAlert } from '../../components/ui/AlertProvider';
-import { StatCardSkeleton, TableSkeleton, Skeleton } from '../../components/ui';
+import { StatCardSkeleton, TableSkeleton, Skeleton, Pagination } from '../../components/ui';
 
 type ViewMode = 'flat' | 'grouped';
 
@@ -30,18 +30,22 @@ const Wages = () => {
     const { error: alertError } = useAlert();
 
     const [isExporting, setIsExporting] = useState(false);
+    const [page, setPage] = useState(1);
+    const limit = 10;
 
-    const { data: employees = [] } = useQuery({
+    const { data: employeesResult } = useQuery({
         queryKey: ['employees'],
-        queryFn: employeeApi.getAll,
+        queryFn: () => employeeApi.getAll(),
         enabled: isAdmin
     });
 
+    const employees = employeesResult?.data || [];
+
     // Fetch Wages List
-    const { data: wages = [], isLoading: isLoadingWages } = useQuery({
-        queryKey: ['wages', dateFilter, employeeFilter, statusFilter, user?.id],
+    const { data: wagesData = { data: [], meta: { total: 0, totalPages: 0 } }, isLoading: isLoadingWages } = useQuery({
+        queryKey: ['wages', dateFilter, employeeFilter, statusFilter, user?.id, page],
         queryFn: async () => {
-            const params: any = {};
+            const params: any = { page, limit };
             if (dateFilter === 'this-month') {
                 params.month = moment().format('YYYY-MM');
             } else if (dateFilter === 'last-month') {
@@ -55,6 +59,9 @@ const Wages = () => {
             return res.data;
         }
     });
+
+    const wages = wagesData.data;
+    const meta = wagesData.meta;
 
     // Fetch Wages Stats
     const { data: wageStats = { totalPaid: 0, totalPending: 0, thisMonth: 0 } } = useQuery({
@@ -204,6 +211,21 @@ const Wages = () => {
         setExpandedJobs(newExpanded);
     };
 
+    const handleDateFilterChange = (val: string) => {
+        setDateFilter(val);
+        setPage(1);
+    };
+
+    const handleEmployeeFilterChange = (val: string) => {
+        setEmployeeFilter(val);
+        setPage(1);
+    };
+
+    const handleStatusFilterChange = (val: string) => {
+        setStatusFilter(val);
+        setPage(1);
+    };
+
     // Calculate chart data from wages
     const wageData = wages.reduce((acc: any[], wage: any) => {
         const week = `Week ${moment(wage.createdAt).week() - moment(wage.createdAt).startOf('month').week() + 1}`;
@@ -217,40 +239,40 @@ const Wages = () => {
     }, []).sort((a: any, b: any) => a.week.localeCompare(b.week));
 
     return (
-        <div className="min-h-screen bg-[#0B0E14] text-gray-200 p-6">
+        <div className="min-h-screen bg-[#0B0E14] text-gray-200 p-4 pb-20">
             <div className="max-w-7xl mx-auto">
 
                 {/* Header */}
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
+                        <h1 className="text-lg sm:text-xl font-bold text-white mb-0.5 flex items-center gap-2">
                             {isAdmin ? (
-                                <DollarSign className="w-8 h-8 text-emerald-400" />
+                                <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
                             ) : (
-                                <Briefcase className="w-8 h-8 text-blue-400" />
+                                <Briefcase className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
                             )}
                             {isAdmin ? 'Wages & Payments' : 'My Earnings'}
                         </h1>
-                        <p className="text-gray-400 text-sm">
-                            {isAdmin ? 'Manage and track employee financial settlements' : 'Track your work-wise earnings and payment status'}
+                        <p className="text-gray-400 text-xs">
+                            {isAdmin ? 'Manage settlements' : 'Track earnings'}
                         </p>
                     </div>
                     {isAdmin && (
-                        <div className="flex gap-3">
+                        <div className="flex flex-wrap gap-2">
                             <button
                                 onClick={() => recalculateMutation.mutate()}
                                 disabled={recalculateMutation.isPending}
-                                className="flex items-center gap-2 px-4 py-2 bg-[#151A21] border border-[#1F2937] text-gray-300 hover:bg-[#1F2937] rounded-lg transition-colors"
+                                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-1.5 bg-[#151A21] border border-[#1F2937] text-gray-300 hover:bg-[#1F2937] rounded-lg transition-colors text-xs"
                             >
-                                <RefreshCw className={cn("w-4 h-4", recalculateMutation.isPending && "animate-spin")} />
+                                <RefreshCw className={cn("w-3.5 h-3.5", recalculateMutation.isPending && "animate-spin")} />
                                 Recalculate
                             </button>
                             <button
                                 onClick={handleExport}
                                 disabled={isExporting}
-                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all shadow-lg shadow-blue-900/20 disabled:opacity-50"
+                                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all shadow-lg shadow-blue-900/20 disabled:opacity-50 text-xs"
                             >
-                                <Download className={cn("w-4 h-4", isExporting && "animate-pulse")} />
+                                <Download className={cn("w-3.5 h-3.5", isExporting && "animate-pulse")} />
                                 {isExporting ? 'Exporting...' : 'Export CSV'}
                             </button>
                         </div>
@@ -258,7 +280,7 @@ const Wages = () => {
                 </div>
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
                     {isLoadingWages ? (
                         <>
                             <StatCardSkeleton />
@@ -268,46 +290,46 @@ const Wages = () => {
                         </>
                     ) : (
                         <>
-                            <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-2xl p-6 shadow-lg shadow-emerald-950/20 group hover:scale-[1.02] transition-transform">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="p-2 bg-white/10 rounded-lg">
-                                        <CheckCircle className="w-6 h-6 text-white" />
+                            <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-xl p-3 shadow-lg shadow-emerald-950/20 group hover:scale-[1.02] transition-transform overflow-hidden">
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <div className="p-1 bg-white/10 rounded-lg">
+                                        <CheckCircle className="w-3.5 h-3.5 text-white" />
                                     </div>
-                                    <TrendingUp className="w-4 h-4 text-white/40" />
+                                    <TrendingUp className="w-3 h-3 text-white/40" />
                                 </div>
-                                <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">{isAdmin ? 'Total Paid' : 'Total Withdrawn'}</p>
-                                <p className="text-3xl font-black text-white font-mono">₹{Number(wageStats.totalPaid || 0).toLocaleString()}</p>
+                                <p className="text-white/70 text-[9px] font-bold uppercase tracking-widest mb-0.5 truncate">{isAdmin ? 'Total Paid' : 'Total Withdrawn'}</p>
+                                <p className="text-lg font-black text-white font-mono truncate">₹{Number(wageStats.totalPaid || 0).toLocaleString()}</p>
                             </div>
 
-                            <div className="bg-gradient-to-br from-amber-600 to-amber-800 rounded-2xl p-6 shadow-lg shadow-amber-950/20 group hover:scale-[1.02] transition-transform">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="p-2 bg-white/10 rounded-lg">
-                                        <Clock className="w-6 h-6 text-white" />
+                            <div className="bg-gradient-to-br from-amber-600 to-amber-800 rounded-xl p-3 shadow-lg shadow-amber-950/20 group hover:scale-[1.02] transition-transform overflow-hidden">
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <div className="p-1 bg-white/10 rounded-lg">
+                                        <Clock className="w-3.5 h-3.5 text-white" />
                                     </div>
-                                    <AlertCircle className="w-4 h-4 text-white/40" />
+                                    <AlertCircle className="w-3 h-3 text-white/40" />
                                 </div>
-                                <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">{isAdmin ? 'Pending' : 'Pending Balance'}</p>
-                                <p className="text-3xl font-black text-white font-mono">₹{Number(wageStats.totalPending || 0).toLocaleString()}</p>
+                                <p className="text-white/70 text-[9px] font-bold uppercase tracking-widest mb-0.5 truncate">{isAdmin ? 'Pending' : 'Pending Balance'}</p>
+                                <p className="text-lg font-black text-white font-mono truncate">₹{Number(wageStats.totalPending || 0).toLocaleString()}</p>
                             </div>
 
-                            <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-6 shadow-lg shadow-blue-950/20 group hover:scale-[1.02] transition-transform">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="p-2 bg-white/10 rounded-lg">
-                                        <Calendar className="w-6 h-6 text-white" />
+                            <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-3 shadow-lg shadow-blue-950/20 group hover:scale-[1.02] transition-transform overflow-hidden">
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <div className="p-1 bg-white/10 rounded-lg">
+                                        <Calendar className="w-3.5 h-3.5 text-white" />
                                     </div>
                                 </div>
-                                <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">M-O-M Earning</p>
-                                <p className="text-3xl font-black text-white font-mono">₹{Number(wageStats.thisMonth || 0).toLocaleString()}</p>
+                                <p className="text-white/70 text-[9px] font-bold uppercase tracking-widest mb-0.5 truncate">M-O-M Earning</p>
+                                <p className="text-lg font-black text-white font-mono truncate">₹{Number(wageStats.thisMonth || 0).toLocaleString()}</p>
                             </div>
 
-                            <div className="bg-gradient-to-br from-purple-600 to-purple-800 rounded-2xl p-6 shadow-lg shadow-purple-950/20 group hover:scale-[1.02] transition-transform">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="p-2 bg-white/10 rounded-lg">
-                                        {isAdmin ? <Users className="w-6 h-6 text-white" /> : <HardHat className="w-6 h-6 text-white" />}
+                            <div className="bg-gradient-to-br from-purple-600 to-purple-800 rounded-xl p-3 shadow-lg shadow-purple-950/20 group hover:scale-[1.02] transition-transform overflow-hidden">
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <div className="p-1 bg-white/10 rounded-lg">
+                                        {isAdmin ? <Users className="w-3.5 h-3.5 text-white" /> : <HardHat className="w-3.5 h-3.5 text-white" />}
                                     </div>
                                 </div>
-                                <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">{isAdmin ? 'Avg / Employee' : 'Avg / Job'}</p>
-                                <p className="text-3xl font-black text-white font-mono">
+                                <p className="text-white/70 text-[9px] font-bold uppercase tracking-widest mb-0.5 truncate">{isAdmin ? 'Avg / Employee' : 'Avg / Job'}</p>
+                                <p className="text-lg font-black text-white font-mono truncate">
                                     ₹{wages.length > 0 ? Math.round((wageStats.thisMonth || 0) / (isAdmin ? new Set(wages.map((w: any) => w.employeeId)).size : wages.length)).toLocaleString() : 0}
                                 </p>
                             </div>
@@ -317,14 +339,14 @@ const Wages = () => {
 
                 {/* Chart (Enhanced) */}
                 {wageData.length > 0 && (
-                    <div className="bg-[#151A21] border border-[#1F2937] rounded-2xl p-6 mb-8 shadow-xl">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-md font-bold text-white uppercase tracking-wider flex items-center gap-3">
-                                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                                {isAdmin ? 'Wage Distribution Trend' : 'Income Growth Trend'}
+                    <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-4 mb-4 shadow-xl">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-[10px] font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                                {isAdmin ? 'Wage Trends' : 'Income Trend'}
                             </h3>
                         </div>
-                        <ResponsiveContainer width="100%" height={250}>
+                        <ResponsiveContainer width="100%" height={200}>
                             <BarChart data={wageData}>
                                 <defs>
                                     <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
@@ -333,33 +355,34 @@ const Wages = () => {
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" vertical={false} />
-                                <XAxis dataKey="week" stroke="#4B5563" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis stroke="#4B5563" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `₹${val}`} />
+                                <XAxis dataKey="week" stroke="#4B5563" fontSize={10} tickLine={false} axisLine={false} />
+                                <YAxis stroke="#4B5563" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(val) => `₹${val}`} />
                                 <Tooltip
                                     cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                                     contentStyle={{
                                         backgroundColor: '#0B0E14',
                                         border: '1px solid #1F2937',
-                                        borderRadius: '12px',
-                                        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.5)'
+                                        borderRadius: '8px',
+                                        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.5)',
+                                        fontSize: '12px'
                                     }}
                                 />
-                                <Bar dataKey="amount" fill="url(#colorAmount)" radius={[6, 6, 0, 0]} barSize={40} />
+                                <Bar dataKey="amount" fill="url(#colorAmount)" radius={[4, 4, 0, 0]} barSize={30} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
                 )}
 
                 {/* Filters & View Toggle */}
-                <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-4 mb-8 shadow-sm">
-                    <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-                        <div className="flex flex-1 flex-wrap gap-4 w-full">
-                            <div className="relative min-w-[160px]">
-                                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+                <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-3 mb-4 shadow-sm">
+                    <div className="flex flex-col md:flex-row gap-3 items-center justify-between">
+                        <div className="flex flex-1 flex-wrap gap-3 w-full">
+                            <div className="relative min-w-[140px]">
+                                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
                                 <select
                                     value={dateFilter}
-                                    onChange={(e) => setDateFilter(e.target.value)}
-                                    className="w-full bg-[#0B0E14] border border-[#1F2937] rounded-lg pl-10 pr-4 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none cursor-pointer"
+                                    onChange={(e) => handleDateFilterChange(e.target.value)}
+                                    className="w-full bg-[#0B0E14] border border-[#1F2937] rounded-lg pl-9 pr-4 py-2 text-xs text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none cursor-pointer"
                                 >
                                     <option value="all">All Time Records</option>
                                     <option value="this-month">This Month</option>
@@ -368,12 +391,12 @@ const Wages = () => {
                             </div>
 
                             {isAdmin && (
-                                <div className="relative min-w-[200px]">
-                                    <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+                                <div className="relative min-w-[180px]">
+                                    <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
                                     <select
                                         value={employeeFilter}
-                                        onChange={(e) => setEmployeeFilter(e.target.value)}
-                                        className="w-full bg-[#0B0E14] border border-[#1F2937] rounded-lg pl-10 pr-4 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none cursor-pointer"
+                                        onChange={(e) => handleEmployeeFilterChange(e.target.value)}
+                                        className="w-full bg-[#0B0E14] border border-[#1F2937] rounded-lg pl-9 pr-4 py-2 text-xs text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none cursor-pointer"
                                     >
                                         <option value="">All Employees</option>
                                         {employees.map((emp: Employee) => (
@@ -385,12 +408,12 @@ const Wages = () => {
                                 </div>
                             )}
 
-                            <div className="relative min-w-[160px]">
-                                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+                            <div className="relative min-w-[140px]">
+                                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
                                 <select
                                     value={statusFilter}
-                                    onChange={(e) => setStatusFilter(e.target.value)}
-                                    className="w-full bg-[#0B0E14] border border-[#1F2937] rounded-lg pl-10 pr-4 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none cursor-pointer"
+                                    onChange={(e) => handleStatusFilterChange(e.target.value)}
+                                    className="w-full bg-[#0B0E14] border border-[#1F2937] rounded-lg pl-9 pr-4 py-2 text-xs text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none cursor-pointer"
                                 >
                                     <option value="">All Statuses</option>
                                     <option value="paid">Finalized / Paid</option>
@@ -400,29 +423,29 @@ const Wages = () => {
                         </div>
 
                         {/* View Mode Toggle */}
-                        <div className="flex bg-[#0B0E14] p-1 rounded-xl border border-[#1F2937] w-full md:w-auto">
+                        <div className="flex bg-[#0B0E14] p-1 rounded-lg border border-[#1F2937] w-full md:w-auto">
                             <button
                                 onClick={() => setViewMode('grouped')}
                                 className={cn(
-                                    "flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all",
+                                    "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all",
                                     viewMode === 'grouped'
                                         ? "bg-[#1F2937] text-white shadow-lg"
                                         : "text-gray-500 hover:text-gray-300"
                                 )}
                             >
-                                <LayoutGrid className="w-4 h-4" />
+                                <LayoutGrid className="w-3.5 h-3.5" />
                                 Grouped
                             </button>
                             <button
                                 onClick={() => setViewMode('flat')}
                                 className={cn(
-                                    "flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all",
+                                    "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all",
                                     viewMode === 'flat'
                                         ? "bg-[#1F2937] text-white shadow-lg"
                                         : "text-gray-500 hover:text-gray-300"
                                 )}
                             >
-                                <LayoutList className="w-4 h-4" />
+                                <LayoutList className="w-3.5 h-3.5" />
                                 List
                             </button>
                         </div>
@@ -456,65 +479,65 @@ const Wages = () => {
                                         {/* Job Header */}
                                         <button
                                             onClick={() => toggleJobExpansion(group.jobId)}
-                                            className="w-full px-6 py-4 flex items-center justify-between hover:bg-[#1F2937]/30 transition-colors"
+                                            className="w-full px-3 py-2.5 flex items-center justify-between hover:bg-[#1F2937]/30 transition-colors"
                                         >
-                                            <div className="flex items-center gap-4">
+                                            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                                                 {isExpanded ? (
-                                                    <ChevronDown className="w-5 h-5 text-gray-400" />
+                                                    <ChevronDown className="w-5 h-5 text-gray-400 shrink-0" />
                                                 ) : (
-                                                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                                                    <ChevronRight className="w-5 h-5 text-gray-400 shrink-0" />
                                                 )}
-                                                <div className="text-left">
-                                                    <h3 className="text-lg font-semibold text-white">{group.jobTitle}</h3>
-                                                    <p className="text-sm text-gray-400">
+                                                <div className="text-left min-w-0">
+                                                    <h3 className="text-base sm:text-lg font-semibold text-white truncate">{group.jobTitle}</h3>
+                                                    <p className="text-xs sm:text-sm text-gray-400">
                                                         {group.employeeCount} {group.employeeCount === 1 ? 'employee' : 'employees'}
                                                     </p>
                                                 </div>
                                             </div>
-                                            <div className="text-right">
-                                                <p className="text-xl font-bold text-green-400">₹{group.totalAmount.toLocaleString()}</p>
-                                                <p className="text-xs text-gray-500">Total wages</p>
+                                            <div className="text-right shrink-0">
+                                                <p className="text-base sm:text-lg font-bold text-green-400">₹{group.totalAmount.toLocaleString()}</p>
+                                                <p className="text-[9px] sm:text-[10px] text-gray-500 uppercase font-bold">Total wages</p>
                                             </div>
                                         </button>
 
                                         {/* Employee Wages List */}
                                         {isExpanded && (
-                                            <div className="border-t border-[#1F2937]">
+                                            <div className="border-t border-[#1F2937] overflow-x-auto">
                                                 <table className="w-full">
                                                     <thead>
                                                         <tr className="bg-[#0B0E14] border-b border-[#1F2937]">
-                                                            {isAdmin && <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Employee</th>}
-                                                            <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Description</th>
-                                                            <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Amount</th>
-                                                            <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Date</th>
-                                                            <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
-                                                            <th className="text-right px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
+                                                            {isAdmin && <th className="text-left px-4 py-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Employee</th>}
+                                                            <th className="text-left px-4 py-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Description</th>
+                                                            <th className="text-left px-4 py-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Amount</th>
+                                                            <th className="text-left px-4 py-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Date</th>
+                                                            <th className="text-left px-4 py-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Status</th>
+                                                            <th className="text-right px-4 py-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-[#1F2937]">
                                                         {group.wages.map((wage: any) => (
                                                             <tr key={wage.id} className="hover:bg-[#1F2937]/30 transition-colors">
                                                                 {isAdmin && (
-                                                                    <td className="px-6 py-4">
+                                                                    <td className="px-4 py-2">
                                                                         <p className="font-semibold text-white">{wage.employee?.firstName} {wage.employee?.lastName}</p>
                                                                     </td>
                                                                 )}
-                                                                <td className="px-6 py-4">
-                                                                    <p className="text-sm text-gray-400">{wage.description}</p>
+                                                                <td className="px-4 py-2">
+                                                                    <p className="text-xs text-gray-400">{wage.description}</p>
                                                                 </td>
-                                                                <td className="px-6 py-4">
+                                                                <td className="px-4 py-2">
                                                                     <p className="font-mono font-semibold text-green-400">₹{Number(wage.amount).toLocaleString()}</p>
                                                                 </td>
-                                                                <td className="px-6 py-4">
-                                                                    <p className="text-sm text-gray-300">{new Date(wage.createdAt).toLocaleDateString()}</p>
+                                                                <td className="px-4 py-2">
+                                                                    <p className="text-xs text-gray-300">{new Date(wage.createdAt).toLocaleDateString()}</p>
                                                                 </td>
-                                                                <td className="px-6 py-4">
+                                                                <td className="px-4 py-2">
                                                                     {wage.isPaid ? (
-                                                                        <span className="px-2.5 py-1 bg-green-500/10 text-green-400 border border-green-500/20 rounded-full text-xs font-semibold">
+                                                                        <span className="px-2 py-0.5 bg-green-500/10 text-green-400 border border-green-500/20 rounded-full text-[10px] font-semibold">
                                                                             Settled
                                                                         </span>
                                                                     ) : (
-                                                                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${wage.status === 'APPROVED' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                                                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${wage.status === 'APPROVED' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
                                                                             wage.status === 'PENDING_APPROVAL' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' :
                                                                                 'bg-gray-500/10 text-gray-400 border-gray-500/20'
                                                                             }`}>
@@ -522,21 +545,21 @@ const Wages = () => {
                                                                         </span>
                                                                     )}
                                                                 </td>
-                                                                <td className="px-6 py-4 text-right">
+                                                                <td className="px-4 py-2 text-right">
                                                                     <div className="flex items-center justify-end gap-2">
                                                                         <button
                                                                             onClick={() => handleViewDetails(wage)}
-                                                                            className="p-1.5 hover:bg-gray-500/10 text-gray-400 rounded transition-colors"
+                                                                            className="p-1 hover:bg-gray-500/10 text-gray-400 rounded transition-colors"
                                                                             title="View Details"
                                                                         >
-                                                                            <Eye className="w-4 h-4" />
+                                                                            <Eye className="w-3.5 h-3.5" />
                                                                         </button>
                                                                         {isAdmin && !wage.isPaid && (
                                                                             <>
                                                                                 {(!wage.status || wage.status === 'DRAFT') && (
                                                                                     <button
                                                                                         onClick={() => updateStatusMutation.mutate({ id: wage.id, status: 'PENDING_APPROVAL' })}
-                                                                                        className="px-3 py-1 bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 border border-yellow-500/20 rounded-lg text-xs font-semibold transition-colors"
+                                                                                        className="px-2 py-1 bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 border border-yellow-500/20 rounded-md text-[10px] font-semibold transition-colors"
                                                                                     >
                                                                                         Review
                                                                                     </button>
@@ -544,7 +567,7 @@ const Wages = () => {
                                                                                 {wage.status === 'PENDING_APPROVAL' && (
                                                                                     <button
                                                                                         onClick={() => updateStatusMutation.mutate({ id: wage.id, status: 'APPROVED' })}
-                                                                                        className="px-3 py-1 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border border-blue-500/20 rounded-lg text-xs font-semibold transition-colors"
+                                                                                        className="px-2 py-1 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border border-blue-500/20 rounded-md text-[10px] font-semibold transition-colors"
                                                                                     >
                                                                                         Approve
                                                                                     </button>
@@ -553,9 +576,9 @@ const Wages = () => {
                                                                                     <button
                                                                                         onClick={() => markAsPaidMutation.mutate(wage.id)}
                                                                                         disabled={markAsPaidMutation.isPending}
-                                                                                        className="px-3 py-1 bg-green-500/10 text-green-500 hover:bg-green-500/20 border border-green-500/20 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50"
+                                                                                        className="px-2 py-1 bg-green-500/10 text-green-500 hover:bg-green-500/20 border border-green-500/20 rounded-md text-[10px] font-semibold transition-colors disabled:opacity-50"
                                                                                     >
-                                                                                        Mark Paid
+                                                                                        Paid
                                                                                     </button>
                                                                                 )}
                                                                             </>
@@ -580,12 +603,12 @@ const Wages = () => {
                             <table className="w-full">
                                 <thead>
                                     <tr className="bg-[#0B0E14] border-b border-[#1F2937]">
-                                        {isAdmin && <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Employee</th>}
-                                        <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Description & Job</th>
-                                        <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Amount</th>
-                                        <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Date</th>
-                                        <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
-                                        <th className="text-right px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
+                                        {isAdmin && <th className="text-left px-4 py-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Employee</th>}
+                                        <th className="text-left px-4 py-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Description & Job</th>
+                                        <th className="text-left px-4 py-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Amount</th>
+                                        <th className="text-left px-4 py-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Date</th>
+                                        <th className="text-left px-4 py-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Status</th>
+                                        <th className="text-right px-4 py-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-[#1F2937]">
@@ -601,30 +624,30 @@ const Wages = () => {
                                         wages.map((wage: any) => (
                                             <tr key={wage.id} className="hover:bg-[#1F2937]/30 transition-colors group">
                                                 {isAdmin && (
-                                                    <td className="px-6 py-4 align-top">
+                                                    <td className="px-4 py-3 align-top">
                                                         <p className="font-semibold text-white">{wage.employee?.firstName} {wage.employee?.lastName}</p>
                                                     </td>
                                                 )}
-                                                <td className="px-6 py-4 align-top">
-                                                    <p className="text-sm text-gray-200 mb-1 font-medium">{wage.description}</p>
-                                                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                                                        <Briefcase className="w-3 h-3" />
+                                                <td className="px-4 py-3 align-top">
+                                                    <p className="text-xs text-gray-200 mb-0.5 font-medium">{wage.description}</p>
+                                                    <div className="flex items-center gap-1.5 text-[10px] text-gray-500">
+                                                        <Briefcase className="w-2.5 h-2.5" />
                                                         {wage.job?.title}
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-4 align-top">
+                                                <td className="px-4 py-3 align-top">
                                                     <p className="font-mono font-bold text-emerald-400">₹{Number(wage.amount).toLocaleString()}</p>
                                                 </td>
-                                                <td className="px-6 py-4 align-top">
-                                                    <p className="text-sm text-gray-400">{new Date(wage.createdAt).toLocaleDateString()}</p>
+                                                <td className="px-4 py-3 align-top">
+                                                    <p className="text-xs text-gray-400">{new Date(wage.createdAt).toLocaleDateString()}</p>
                                                 </td>
-                                                <td className="px-6 py-4 align-top">
+                                                <td className="px-4 py-3 align-top">
                                                     {wage.isPaid ? (
-                                                        <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-xs font-bold uppercase tracking-wider">
+                                                        <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-[10px] font-bold uppercase tracking-wider">
                                                             Settled
                                                         </span>
                                                     ) : (
-                                                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${wage.status === 'APPROVED' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${wage.status === 'APPROVED' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
                                                             wage.status === 'PENDING_APPROVAL' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
                                                                 'bg-slate-500/10 text-slate-400 border-slate-500/20'
                                                             }`}>
@@ -632,21 +655,21 @@ const Wages = () => {
                                                         </span>
                                                     )}
                                                 </td>
-                                                <td className="px-6 py-4 text-right align-top">
+                                                <td className="px-4 py-3 text-right align-top">
                                                     <div className="flex items-center justify-end gap-2">
                                                         <button
                                                             onClick={() => handleViewDetails(wage)}
-                                                            className="p-1.5 hover:bg-white/5 text-gray-400 hover:text-white rounded-lg transition-colors"
+                                                            className="p-1 hover:bg-white/5 text-gray-400 hover:text-white rounded-lg transition-colors"
                                                             title="View Details"
                                                         >
-                                                            <Eye className="w-4 h-4" />
+                                                            <Eye className="w-3.5 h-3.5" />
                                                         </button>
                                                         {isAdmin && !wage.isPaid && (
                                                             <>
                                                                 {(!wage.status || wage.status === 'DRAFT') && (
                                                                     <button
                                                                         onClick={() => updateStatusMutation.mutate({ id: wage.id, status: 'PENDING_APPROVAL' })}
-                                                                        className="px-3 py-1.5 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 border border-amber-500/20 rounded-lg text-xs font-bold transition-all"
+                                                                        className="px-2 py-1 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 border border-amber-500/20 rounded-md text-[10px] font-bold transition-all"
                                                                     >
                                                                         Review
                                                                     </button>
@@ -654,7 +677,7 @@ const Wages = () => {
                                                                 {wage.status === 'PENDING_APPROVAL' && (
                                                                     <button
                                                                         onClick={() => updateStatusMutation.mutate({ id: wage.id, status: 'APPROVED' })}
-                                                                        className="px-3 py-1.5 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border border-blue-500/20 rounded-lg text-xs font-bold transition-all"
+                                                                        className="px-2 py-1 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border border-blue-500/20 rounded-md text-[10px] font-bold transition-all"
                                                                     >
                                                                         Approve
                                                                     </button>
@@ -663,7 +686,7 @@ const Wages = () => {
                                                                     <button
                                                                         onClick={() => markAsPaidMutation.mutate(wage.id)}
                                                                         disabled={markAsPaidMutation.isPending}
-                                                                        className="px-3 py-1.5 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-lg text-xs font-bold transition-all disabled:opacity-50"
+                                                                        className="px-2 py-1 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-md text-[10px] font-bold transition-all disabled:opacity-50"
                                                                     >
                                                                         Mark Paid
                                                                     </button>
@@ -680,6 +703,17 @@ const Wages = () => {
                         </div>
                     </div>
                 )}
+
+                <div className="mt-8 flex justify-center">
+                    <Pagination
+                        currentPage={page}
+                        totalPages={meta.totalPages}
+                        onPageChange={(p) => {
+                            setPage(p);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                    />
+                </div>
 
                 {/* Wage Detail Modal */}
                 {showDetailModal && selectedWage && (
@@ -762,8 +796,8 @@ const Wages = () => {
                                                     </tbody>
                                                     <tfoot>
                                                         <tr className="bg-[#1F2937]/20 font-bold border-t border-[#1F2937]">
-                                                            <td className="px-4 py-3 text-white text-xs">Total Net Earning</td>
-                                                            <td className="px-4 py-3 text-right text-emerald-400 font-mono text-sm">₹{Number(selectedWage.amount).toLocaleString()}</td>
+                                                            <td className="px-4 py-2 text-white text-[10px]">Total Net Earning</td>
+                                                            <td className="px-4 py-2 text-right text-emerald-400 font-mono text-xs">₹{Number(selectedWage.amount).toLocaleString()}</td>
                                                         </tr>
                                                     </tfoot>
                                                 </table>

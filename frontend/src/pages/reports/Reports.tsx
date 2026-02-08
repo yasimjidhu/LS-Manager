@@ -41,36 +41,36 @@ const Reports = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#0B0E14] text-gray-200 p-6">
+        <div className="min-h-screen bg-[#0B0E14] text-gray-200 p-4 pb-20">
             <div className="max-w-7xl mx-auto">
 
                 {/* Header */}
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-white mb-1 flex items-center gap-2">
-                            <BarChart3 className="w-6 h-6 text-blue-400" />
+                        <h1 className="text-xl font-bold text-white mb-0.5 flex items-center gap-2">
+                            <BarChart3 className="w-5 h-5 text-blue-400" />
                             Reports & Analytics
                         </h1>
-                        <p className="text-gray-400 text-sm">
-                            {user?.role === 'ADMIN' ? 'Comprehensive business insights and metrics' :
+                        <p className="text-gray-400 text-xs">
+                            {user?.role === 'ADMIN' ? 'Comprehensive business insights' :
                                 user?.role === 'SUPERVISOR' ? 'Team performance and job management' :
-                                    'Your work history and performance'}
+                                    'Your work history'}
                         </p>
                     </div>
-                    <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold transition-colors shadow-lg shadow-blue-900/20">
-                        <Download className="w-4 h-4" /> Export Report
+                    <button className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold transition-colors shadow-lg shadow-blue-900/20">
+                        <Download className="w-3.5 h-3.5" /> Export Report
                     </button>
                 </div>
 
                 {/* Filters */}
-                <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-4 mb-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-3 mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div>
-                            <label className="block text-sm font-medium text-gray-400 mb-2">Date Range</label>
+                            <label className="block text-xs font-medium text-gray-400 mb-1.5">Date Range</label>
                             <select
                                 value={dateRange}
                                 onChange={(e) => setDateRange(e.target.value)}
-                                className="w-full bg-[#0B0E14] border border-[#1F2937] rounded-lg px-4 py-2 text-sm text-gray-200 focus:outline-none focus:border-blue-500 transition-colors"
+                                className="w-full bg-[#0B0E14] border border-[#1F2937] rounded-lg px-3 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-blue-500 transition-colors"
                             >
                                 <option value="this-week">This Week</option>
                                 <option value="this-month">This Month</option>
@@ -81,8 +81,8 @@ const Reports = () => {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-400 mb-2">Format</label>
-                            <select className="w-full bg-[#0B0E14] border border-[#1F2937] rounded-lg px-4 py-2 text-sm text-gray-200 focus:outline-none focus:border-blue-500 transition-colors">
+                            <label className="block text-xs font-medium text-gray-400 mb-1.5">Format</label>
+                            <select className="w-full bg-[#0B0E14] border border-[#1F2937] rounded-lg px-3 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-blue-500 transition-colors">
                                 <option value="pdf">PDF</option>
                                 <option value="excel">Excel</option>
                                 <option value="csv">CSV</option>
@@ -95,62 +95,63 @@ const Reports = () => {
                 {user?.role === 'ADMIN' && analytics && (
                     <>
                         {/* Summary Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                            <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl p-5">
-                                <div className="flex items-center justify-between mb-3">
-                                    <DollarSign className="w-8 h-8 text-white/80" />
-                                    <TrendingUp className="w-5 h-5 text-white/60" />
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+                            <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl p-3">
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <DollarSign className="w-5 h-5 text-white/80" />
+                                    <TrendingUp className="w-3.5 h-3.5 text-white/60" />
                                 </div>
-                                <p className="text-white/80 text-xs uppercase tracking-wide mb-1">Total Revenue</p>
-                                <p className="text-2xl font-bold text-white">₹{analytics.summary?.totalRevenue?.toLocaleString() || 0}</p>
-                                <p className="text-white/60 text-xs mt-2">₹{analytics.summary?.pendingAmount?.toLocaleString() || 0} pending</p>
+                                <p className="text-white/80 text-[9px] uppercase tracking-wide mb-0.5">Total Revenue</p>
+                                <p className="text-lg font-bold text-white">₹{analytics.summary?.totalRevenue?.toLocaleString() || 0}</p>
+                                <p className="text-white/60 text-[9px] mt-0.5">₹{analytics.summary?.pendingAmount?.toLocaleString() || 0} pending</p>
                             </div>
 
-                            <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-xl p-5">
-                                <div className="flex items-center justify-between mb-3">
-                                    <Briefcase className="w-8 h-8 text-white/80" />
+                            <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-xl p-3">
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <Briefcase className="w-5 h-5 text-white/80" />
                                 </div>
-                                <p className="text-white/80 text-xs uppercase tracking-wide mb-1">Jobs Completed</p>
-                                <p className="text-2xl font-bold text-white">{analytics.summary?.jobsCompleted || 0}</p>
-                                <p className="text-white/60 text-xs mt-2">{analytics.summary?.activeJobs || 0} active jobs</p>
+                                <p className="text-white/80 text-[9px] uppercase tracking-wide mb-0.5">Jobs Completed</p>
+                                <p className="text-lg font-bold text-white">{analytics.summary?.jobsCompleted || 0}</p>
+                                <p className="text-white/60 text-[9px] mt-0.5">{analytics.summary?.activeJobs || 0} active jobs</p>
                             </div>
 
-                            <div className="bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl p-5">
-                                <div className="flex items-center justify-between mb-3">
-                                    <Users className="w-8 h-8 text-white/80" />
+                            <div className="bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl p-3">
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <Users className="w-5 h-5 text-white/80" />
                                 </div>
-                                <p className="text-white/80 text-xs uppercase tracking-wide mb-1">Active Employees</p>
-                                <p className="text-2xl font-bold text-white">{analytics.summary?.activeEmployees || 0}</p>
-                                <p className="text-white/60 text-xs mt-2">This period</p>
+                                <p className="text-white/80 text-[9px] uppercase tracking-wide mb-0.5">Active Employees</p>
+                                <p className="text-lg font-bold text-white">{analytics.summary?.activeEmployees || 0}</p>
+                                <p className="text-white/60 text-[9px] mt-0.5">This period</p>
                             </div>
 
-                            <div className="bg-gradient-to-br from-amber-600 to-amber-700 rounded-xl p-5">
-                                <div className="flex items-center justify-between mb-3">
-                                    <FileText className="w-8 h-8 text-white/80" />
+                            <div className="bg-gradient-to-br from-amber-600 to-amber-700 rounded-xl p-3">
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <FileText className="w-5 h-5 text-white/80" />
                                 </div>
-                                <p className="text-white/80 text-xs uppercase tracking-wide mb-1">Invoices Sent</p>
-                                <p className="text-2xl font-bold text-white">{analytics.summary?.totalInvoices || 0}</p>
-                                <p className="text-white/60 text-xs mt-2">₹{analytics.summary?.totalPaid?.toLocaleString() || 0} paid</p>
+                                <p className="text-white/80 text-[9px] uppercase tracking-wide mb-0.5">Invoices Sent</p>
+                                <p className="text-lg font-bold text-white">{analytics.summary?.totalInvoices || 0}</p>
+                                <p className="text-white/60 text-[9px] mt-0.5">₹{analytics.summary?.totalPaid?.toLocaleString() || 0} paid</p>
                             </div>
                         </div>
 
                         {/* Revenue Trend */}
                         {analytics.revenueTrend && analytics.revenueTrend.length > 0 && (
-                            <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-6 mb-6">
-                                <h3 className="text-lg font-semibold text-white mb-4">Revenue, Expenses & Profit Trend</h3>
-                                <ResponsiveContainer width="100%" height={350}>
+                            <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-3 mb-4">
+                                <h3 className="text-sm font-semibold text-white mb-3">Revenue, Expenses & Profit Trend</h3>
+                                <ResponsiveContainer width="100%" height={220}>
                                     <LineChart data={analytics.revenueTrend}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" />
-                                        <XAxis dataKey="month" stroke="#9CA3AF" />
-                                        <YAxis stroke="#9CA3AF" />
+                                        <XAxis dataKey="month" stroke="#9CA3AF" tick={{ fontSize: 10 }} />
+                                        <YAxis stroke="#9CA3AF" tick={{ fontSize: 10 }} />
                                         <Tooltip
                                             contentStyle={{
                                                 backgroundColor: '#1F2937',
                                                 border: '1px solid #374151',
-                                                borderRadius: '8px'
+                                                borderRadius: '8px',
+                                                fontSize: '12px'
                                             }}
                                         />
-                                        <Legend />
+                                        <Legend wrapperStyle={{ fontSize: '10px' }} />
                                         <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={2} />
                                         <Line type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={2} />
                                         <Line type="monotone" dataKey="profit" stroke="#10b981" strokeWidth={2} />
@@ -162,34 +163,34 @@ const Reports = () => {
                         {/* Top Employees */}
                         {analytics.topEmployees && analytics.topEmployees.length > 0 && (
                             <div className="bg-[#151A21] border border-[#1F2937] rounded-xl overflow-hidden">
-                                <div className="p-6 border-b border-[#1F2937]">
-                                    <h3 className="text-lg font-semibold text-white">Top Performing Employees</h3>
+                                <div className="p-4 border-b border-[#1F2937]">
+                                    <h3 className="text-Base font-semibold text-white">Top Performing Employees</h3>
                                 </div>
                                 <div className="overflow-x-auto">
                                     <table className="w-full">
                                         <thead>
                                             <tr className="bg-[#0B0E14] border-b border-[#1F2937]">
-                                                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase">Employee</th>
-                                                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase">Total Jobs</th>
-                                                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase">Completed</th>
-                                                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase">Earnings</th>
+                                                <th className="text-left px-4 py-2 text-[10px] font-semibold text-gray-400 uppercase">Employee</th>
+                                                <th className="text-left px-4 py-2 text-[10px] font-semibold text-gray-400 uppercase">Total Jobs</th>
+                                                <th className="text-left px-4 py-2 text-[10px] font-semibold text-gray-400 uppercase">Completed</th>
+                                                <th className="text-left px-4 py-2 text-[10px] font-semibold text-gray-400 uppercase">Earnings</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-[#1F2937]">
                                             {analytics.topEmployees.map((emp: any, idx: number) => (
                                                 <tr key={idx} className="hover:bg-[#1F2937]/30 transition-colors">
-                                                    <td className="px-6 py-4">
-                                                        <p className="font-semibold text-white">{emp.firstName} {emp.lastName}</p>
-                                                        <p className="text-xs text-gray-400">{emp.role}</p>
+                                                    <td className="px-4 py-3">
+                                                        <p className="font-semibold text-white text-sm">{emp.firstName} {emp.lastName}</p>
+                                                        <p className="text-[10px] text-gray-400">{emp.role}</p>
                                                     </td>
-                                                    <td className="px-6 py-4">
-                                                        <p className="text-gray-300">{emp.jobs}</p>
+                                                    <td className="px-4 py-3">
+                                                        <p className="text-gray-300 text-xs">{emp.jobs}</p>
                                                     </td>
-                                                    <td className="px-6 py-4">
-                                                        <p className="text-green-400">{emp.completedJobs}</p>
+                                                    <td className="px-4 py-3">
+                                                        <p className="text-green-400 text-xs">{emp.completedJobs}</p>
                                                     </td>
-                                                    <td className="px-6 py-4">
-                                                        <p className="text-blue-400 font-medium font-mono">₹{emp.totalEarnings?.toLocaleString()}</p>
+                                                    <td className="px-4 py-3">
+                                                        <p className="text-blue-400 font-medium font-mono text-xs">₹{emp.totalEarnings?.toLocaleString()}</p>
                                                     </td>
                                                 </tr>
                                             ))}

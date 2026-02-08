@@ -20,8 +20,8 @@ export type Employee = {
 }
 
 export const employeeApi = {
-    getAll: async () => {
-        const { data } = await api.get<Employee[]>('/employees');
+    getAll: async (params?: { page?: number; limit?: number; search?: string; role?: string; status?: string }) => {
+        const { data } = await api.get<{ data: Employee[]; meta: any }>('/employees', { params });
         return data;
     },
     getOne: async (id: string) => {
@@ -38,5 +38,9 @@ export const employeeApi = {
     },
     delete: async (id: string) => {
         await api.delete(`/employees/${id}`);
+    },
+    getStats: async () => {
+        const { data } = await api.get<{ total: number; active: number; supervisors: number; blocked: number }>('/employees/stats');
+        return data;
     }
 };

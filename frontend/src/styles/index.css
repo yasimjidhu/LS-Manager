@@ -14,14 +14,42 @@ body {
 /* Scrollbar styling for a cleaner look */
 ::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
+
 ::-webkit-scrollbar-track {
   background: #0B0E14;
 }
+
 ::-webkit-scrollbar-thumb {
   background: #1F2937;
   border-radius: 4px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: #374151;
+}
+
+/* Responsive Table Wrapper */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Hide scrollbar but allow scrolling */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+/* Premium Gradients */
+.bg-gradient-premium {
+  background: linear-gradient(135deg, #111315 0%, #0B0E14 100%);
 }

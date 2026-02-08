@@ -12,31 +12,31 @@ import { usePermissions } from '../../hooks/usePermissions';
 import { settingsSections } from '../../config/permissions';
 
 const StatCard = ({ title, value, subtext, icon: Icon, colorClass }: { title: string, value: string, subtext: string, icon: any, colorClass: string }) => (
-    <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-6 relative overflow-hidden group hover:border-[#374151] transition-all">
-        <div className="flex items-start justify-between mb-4">
-            <div className={`p-3 rounded-lg ${colorClass} bg-opacity-10 text-opacity-100`}>
-                <Icon className={`w-6 h-6 ${colorClass.replace('bg-', 'text-')}`} />
+    <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-4 relative overflow-hidden group hover:border-[#374151] transition-all">
+        <div className="flex items-start justify-between mb-2">
+            <div className={`p-2 rounded-lg ${colorClass} bg-opacity-10 text-opacity-100`}>
+                <Icon className={`w-5 h-5 ${colorClass.replace('bg-', 'text-')}`} />
             </div>
         </div>
         <div>
-            <h4 className="text-gray-400 text-sm font-medium mb-1">{title}</h4>
-            <div className="text-2xl font-bold text-white mb-1">{value}</div>
-            <p className="text-xs text-gray-500">{subtext}</p>
+            <h4 className="text-gray-400 text-xs font-medium mb-0.5">{title}</h4>
+            <div className="text-xl font-bold text-white mb-0.5">{value}</div>
+            <p className="text-[10px] text-gray-500">{subtext}</p>
         </div>
     </div>
 );
 
 const SettingCard = ({ title, description, icon: Icon, onClick, colorClass }: { title: string, description: string, icon: any, onClick: () => void, colorClass: string }) => (
-    <button onClick={onClick} className="bg-[#151A21] border border-[#1F2937] rounded-xl p-6 text-left group hover:border-blue-500/50 hover:bg-[#1A1F26] transition-all relative overflow-hidden">
-        <div className={`p-3 rounded-lg w-fit mb-4 ${colorClass} bg-opacity-10`}>
-            <Icon className={`w-6 h-6 ${colorClass.replace('bg-', 'text-')}`} />
+    <button onClick={onClick} className="bg-[#151A21] border border-[#1F2937] rounded-xl p-4 text-left group hover:border-blue-500/50 hover:bg-[#1A1F26] transition-all relative overflow-hidden">
+        <div className={`p-2 rounded-lg w-fit mb-3 ${colorClass} bg-opacity-10`}>
+            <Icon className={`w-5 h-5 ${colorClass.replace('bg-', 'text-')}`} />
         </div>
         <div className="flex justify-between items-start">
             <div>
-                <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-blue-400 transition-colors">{title}</h3>
-                <p className="text-sm text-gray-400 leading-relaxed">{description}</p>
+                <h3 className="text-base font-semibold text-white mb-1 group-hover:text-blue-400 transition-colors">{title}</h3>
+                <p className="text-xs text-gray-400 leading-relaxed">{description}</p>
             </div>
-            <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
+            <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
         </div>
     </button>
 );
@@ -108,14 +108,14 @@ const Settings = () => {
     }
 
     return (
-        <div className="max-w-7xl mx-auto animate-in fade-in duration-500 pb-10">
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
-                <p className="text-gray-400">Manage system configuration and preferences</p>
+        <div className="max-w-7xl mx-auto animate-in fade-in duration-500 pb-20 p-4">
+            <div className="mb-6">
+                <h1 className="text-xl font-bold text-white mb-0.5">Settings</h1>
+                <p className="text-gray-400 text-xs">Manage system configuration and preferences</p>
             </div>
 
             {/* Top Stats Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-4">
                 <StatCard
                     title="Active Users"
                     value="42"
@@ -124,24 +124,26 @@ const Settings = () => {
                     colorClass="bg-blue-500"
                 />
                 <StatCard
-                    title="System Version"
+                    title="Version"
                     value="v2.4.1"
-                    subtext="Last updated: Jan 15"
+                    subtext="Updated Jan 15"
                     icon={Server}
                     colorClass="bg-emerald-500"
                 />
-                <StatCard
-                    title="Configuration"
-                    value="87%"
-                    subtext="Setup completed"
-                    icon={SettingsIcon}
-                    colorClass="bg-purple-500"
-                />
+                <div className="hidden md:block">
+                    <StatCard
+                        title="Configuration"
+                        value="87%"
+                        subtext="Setup completed"
+                        icon={SettingsIcon}
+                        colorClass="bg-purple-500"
+                    />
+                </div>
             </div>
 
             {/* Settings Grid - Only show allowed sections */}
             {allowedSections.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mb-6">
                     {allowedSections.map((section) => {
                         const Icon = iconMap[section.icon] || Shield;
                         return (
@@ -157,22 +159,22 @@ const Settings = () => {
                     })}
                 </div>
             ) : (
-                <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-12 text-center">
-                    <Shield className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                    <h3 className="text-xl font-bold text-white mb-2">No Settings Available</h3>
-                    <p className="text-gray-400">You don't have permission to access any settings sections.</p>
+                <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-6 text-center">
+                    <Shield className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+                    <h3 className="text-lg font-bold text-white mb-2">No Settings Available</h3>
+                    <p className="text-gray-400 text-sm">You don't have permission to access any settings sections.</p>
                 </div>
             )}
 
             {/* System Info Footer */}
-            <div className="bg-[#151A21] border border-[#1F2937] rounded-2xl p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">System Information</h3>
+            <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-4">
+                <h3 className="text-base font-semibold text-white mb-3">System Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12">
                     <div>
                         <SystemInfoRow label="Database Status" status="Connected" />
-                        <SystemInfoRow label="Last Backup" value="Jan 30, 2026 02:00 AM" />
+                        <SystemInfoRow label="Last Backup" value="Jan 30, 2:00 AM" />
                     </div>
-                    <div>
+                    <div className="hidden md:block">
                         <SystemInfoRow label="Storage Used" value="2.4 GB / 50 GB" />
                         <SystemInfoRow label="License Type" value="Enterprise" />
                     </div>

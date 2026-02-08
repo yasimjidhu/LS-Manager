@@ -1,4 +1,4 @@
-import { Search, Bell, X, Info, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Search, Bell, X, Info, AlertTriangle, CheckCircle2, Menu } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../store';
 import { useState, useRef, useEffect } from 'react';
@@ -7,7 +7,11 @@ import { NotificationsService } from '../../services/notifications.service';
 import { cn } from '../../lib/utils';
 import moment from 'moment';
 
-const Navbar = () => {
+interface NavbarProps {
+    toggleMobileMenu: () => void;
+}
+
+const Navbar = ({ toggleMobileMenu }: NavbarProps) => {
     const { user } = useSelector((state: RootState) => state.auth);
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -65,15 +69,25 @@ const Navbar = () => {
     };
 
     return (
-        <nav className="fixed top-0 left-20 right-0 z-30 h-20 bg-[#0B0E14] flex items-center justify-between px-8">
-            {/* Search Bar */}
-            <div className="relative w-96">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                <input
-                    type="text"
-                    placeholder="Search equipment, jobs..."
-                    className="w-full h-12 bg-[#151A21] border border-[#1F2937] rounded-xl pl-12 pr-4 text-sm text-gray-300 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
-                />
+        <nav className="fixed top-0 lg:left-16 left-0 right-0 z-30 h-14 bg-[#0B0E14] flex items-center justify-between px-4 border-b border-[#1F2937]/50 lg:border-0">
+            <div className="flex items-center gap-4">
+                {/* Mobile Menu Toggle */}
+                <button
+                    onClick={toggleMobileMenu}
+                    className="lg:hidden p-2 text-gray-400 hover:text-white transition-colors"
+                >
+                    <Menu className="w-6 h-6" />
+                </button>
+
+                {/* Search Bar - Hidden on small mobile */}
+                <div className="relative w-64 md:w-80 hidden sm:block">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                    <input
+                        type="text"
+                        placeholder="Search..."
+                        className="w-full h-9 bg-[#151A21] border border-[#1F2937] rounded-lg pl-9 pr-4 text-sm text-gray-300 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+                    />
+                </div>
             </div>
 
             {/* Right Section */}
@@ -84,11 +98,11 @@ const Navbar = () => {
                 <div className="relative" ref={dropdownRef}>
                     <button
                         onClick={() => setIsOpen(!isOpen)}
-                        className="relative p-2 text-gray-400 hover:text-white transition-colors outline-none"
+                        className="relative p-1.5 text-gray-400 hover:text-white transition-colors outline-none"
                     >
-                        <Bell className="w-6 h-6" />
+                        <Bell className="w-5 h-5" />
                         {unreadCount > 0 && (
-                            <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#0B0E14] animate-pulse"></span>
+                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-[#0B0E14] animate-pulse"></span>
                         )}
                     </button>
 
@@ -151,15 +165,15 @@ const Navbar = () => {
                 </div>
 
                 {/* Profile Dropdown */}
-                <div className="flex items-center gap-3 pl-6 border-l border-[#1F2937]">
-                    <div className="text-right hidden md:block">
-                        <div className="text-sm font-semibold text-white">{user?.name || 'User'}</div>
+                <div className="flex items-center gap-3 pl-4 md:pl-6 border-l border-[#1F2937]">
+                    <div className="text-right hidden sm:block">
+                        <div className="text-sm font-semibold text-white truncate max-w-[100px]">{user?.name || 'User'}</div>
                         <div className="text-xs text-green-500 font-medium text-right flex items-center justify-end gap-1">
                             <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
                             {user?.role || 'GUEST'}
                         </div>
                     </div>
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold border-2 border-[#1F2937]">
+                    <div className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold border-2 border-[#1F2937] flex-shrink-0 text-sm">
                         {user?.name ? getInitials(user.name) : 'U'}
                     </div>
                 </div>

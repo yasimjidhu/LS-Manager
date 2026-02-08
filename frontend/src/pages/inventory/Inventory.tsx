@@ -1,4 +1,4 @@
-import { Plus, Filter, PenSquare, History, Box, ChevronDown, X, Loader2, ChevronLeft, ChevronRight, Wrench, CheckCircle2, Clock } from 'lucide-react';
+import { Plus, Search, PenSquare, History, Box, ChevronDown, X, Loader2, Wrench, CheckCircle2, Clock } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -9,29 +9,29 @@ import { inventoryApi, type InventoryItem } from '../../services/inventory.servi
 import { maintenanceApi } from '../../services/maintenance.service';
 import { useConfirm } from '../../components/ui/ConfirmProvider';
 import { useAlert } from '../../components/ui/AlertProvider';
-import { CardSkeleton } from '../../components/ui';
+import { CardSkeleton, Pagination } from '../../components/ui';
 import moment from 'moment';
 
 import { API_URL } from '../../services/api';
 
 const InventoryCard = ({ item, readOnly, onEdit, onDelete, onHistory, onMaintenance }: { item: InventoryItem; readOnly?: boolean; onEdit: (item: InventoryItem) => void; onDelete: (id: string) => void; onHistory: (id: string) => void; onMaintenance: (item: InventoryItem) => void }) => {
     return (
-        <div className="bg-[#151A21] border border-[#1F2937] rounded-2xl p-4 group hover:border-gray-600 transition-all flex flex-col h-full relative overflow-hidden">
+        <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-3 md:p-4 group hover:border-gray-600 transition-all flex flex-col h-full relative overflow-hidden">
             {/* Status Badge - Now shows Availability */}
-            <div className="absolute top-4 right-4 z-10">
+            <div className="absolute top-2 right-2 z-10">
                 {(() => {
                     if (item.status === 'MAINTENANCE') {
                         return (
-                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border flex items-center gap-1.5 backdrop-blur-md transition-all bg-amber-500/10 text-amber-500 border-amber-500/20 shadow-lg shadow-amber-500/5">
-                                <span className={cn("w-1.5 h-1.5 rounded-full bg-current animate-pulse")}></span>
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 backdrop-blur-md transition-all bg-amber-500/10 text-amber-500 border-amber-500/20 shadow-lg shadow-amber-500/5">
+                                <span className={cn("w-1 h-1 rounded-full bg-current animate-pulse")}></span>
                                 MAINTENANCE
                             </span>
                         );
                     }
                     if (item.status === 'DAMAGED' || item.status === 'RETIRED') {
                         return (
-                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border flex items-center gap-1.5 backdrop-blur-md transition-all bg-red-500/10 text-red-500 border-red-500/20">
-                                <span className={cn("w-1.5 h-1.5 rounded-full bg-current")}></span>
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 backdrop-blur-md transition-all bg-red-500/10 text-red-500 border-red-500/20">
+                                <span className={cn("w-1 h-1 rounded-full bg-current")}></span>
                                 {item.status}
                             </span>
                         );
@@ -42,12 +42,12 @@ const InventoryCard = ({ item, readOnly, onEdit, onDelete, onHistory, onMaintena
                     const isPartiallyAvailable = available > 0 && available < item.quantity;
 
                     return (
-                        <span className={cn("px-2.5 py-1 rounded-full text-[10px] font-bold border flex items-center gap-1.5 backdrop-blur-md transition-all",
+                        <span className={cn("px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 backdrop-blur-md transition-all",
                             isFullyAvailable ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
                                 isPartiallyAvailable ? "bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-lg shadow-blue-500/5" :
                                     "bg-red-500/10 text-red-400 border-red-500/20"
                         )}>
-                            <span className={cn("w-1.5 h-1.5 rounded-full bg-current animate-pulse")}></span>
+                            <span className={cn("w-1 h-1 rounded-full bg-current animate-pulse")}></span>
                             {available}/{item.quantity} AVAILABLE
                         </span>
                     );
@@ -55,7 +55,7 @@ const InventoryCard = ({ item, readOnly, onEdit, onDelete, onHistory, onMaintena
             </div>
 
             {/* Image Placeholder */}
-            <div className="h-40 bg-[#0B0E14] rounded-xl mb-4 flex items-center justify-center relative group-hover:bg-[#111419] transition-colors overflow-hidden">
+            <div className="h-28 md:h-36 bg-[#0B0E14] rounded-lg mb-3 flex items-center justify-center relative group-hover:bg-[#111419] transition-colors overflow-hidden">
                 {item.imageUrl ? (
                     <img
                         src={item.imageUrl.startsWith('/') ? `${API_URL}${item.imageUrl}` : item.imageUrl}
@@ -63,7 +63,7 @@ const InventoryCard = ({ item, readOnly, onEdit, onDelete, onHistory, onMaintena
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                 ) : (
-                    <Box className={cn("w-12 h-12 opacity-20 transition-transform duration-500 group-hover:scale-110",
+                    <Box className={cn("w-8 h-8 md:w-12 md:h-12 opacity-20 transition-transform duration-500 group-hover:scale-110",
                         item.category?.name === 'Lighting' ? "text-cyan-400" :
                             item.category?.name === 'Audio' ? "text-purple-400" :
                                 item.category?.name === 'Rigging' ? "text-amber-400" :
@@ -75,65 +75,64 @@ const InventoryCard = ({ item, readOnly, onEdit, onDelete, onHistory, onMaintena
             {/* Content */}
             <div className="flex-1">
                 <div className="flex justify-between items-start mb-1">
-                    <h3 className="text-white font-semibold text-lg">{item.name}</h3>
+                    <h3 className="text-white font-bold text-xs md:text-sm line-clamp-1">{item.name}</h3>
                 </div>
-                <p className="text-gray-400 text-sm mb-4 line-clamp-2">{item.description || 'No description'}</p>
+                <p className="text-gray-400 text-[10px] md:text-xs mb-3 line-clamp-2 min-h-[2.5em]">{item.description || 'No description'}</p>
 
-                <div className="grid grid-cols-2 gap-y-2 text-xs text-gray-500 mb-6">
-                    <div>Asset ID: <span className="text-gray-300 block">{item.qrCode}</span></div>
-                    <div className="text-right">Category: <span className="text-gray-300 block">{item.category?.name}</span></div>
-                    <div>Availability: <span className="text-gray-300 block">{item.quantity - (item.checkedOutQuantity || 0)} / {item.quantity} available</span></div>
-                    <div className="text-right">Price: <span className="text-gray-300 block">${item.price}</span></div>
+                <div className="grid grid-cols-2 gap-y-1 text-[10px] md:text-xs text-gray-500 mb-4">
+                    <div>ID: <span className="text-gray-300">{item.qrCode}</span></div>
+                    <div className="text-right">Type: <span className="text-gray-300">{item.category?.name}</span></div>
+                    <div>Avail: <span className="text-gray-300">{item.quantity - (item.checkedOutQuantity || 0)}/{item.quantity}</span></div>
+                    <div className="text-right">Rate: <span className="text-gray-300">${item.price}</span></div>
                 </div>
             </div>
 
             {/* Actions */}
-            {/* Actions */}
-            <div className="flex gap-2 mt-auto">
+            <div className="flex gap-1.5 mt-auto">
                 {!readOnly && (
                     <button
                         onClick={() => onEdit(item)}
-                        className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-[#1F2937] hover:bg-[#374151] text-gray-300 text-xs font-medium transition-colors"
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-[#1F2937] hover:bg-[#374151] text-gray-300 text-[10px] md:text-xs font-medium transition-colors"
                     >
                         <PenSquare className="w-3.5 h-3.5" /> Edit
                     </button>
                 )}
 
-                <div className={cn("flex gap-2", readOnly && "w-full")}>
+                <div className={cn("flex gap-1.5", readOnly && "w-full")}>
                     {/* Maintenance Button - Available to everyone */}
                     <button
                         onClick={() => onMaintenance(item)}
                         disabled={item.status === 'MAINTENANCE' || item.status === 'DAMAGED' || item.status === 'RETIRED'}
                         className={cn(
-                            "p-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
+                            "p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
                             readOnly ? "flex-1 flex items-center justify-center gap-2" : ""
                         )}
                         title={item.status === 'MAINTENANCE' ? 'Already in maintenance' : "Report Maintenance"}
                     >
-                        <Wrench className="w-4 h-4" />
-                        {readOnly && <span className="text-xs font-medium">Report Issue</span>}
+                        <Wrench className="w-3.5 h-3.5" />
+                        {readOnly && <span className="text-[10px] font-medium">Report Issue</span>}
                     </button>
 
                     {/* History Button - Available to everyone */}
                     <button
                         onClick={() => onHistory(item.id)}
                         className={cn(
-                            "p-2 rounded-lg bg-[#1F2937] hover:bg-[#374151] text-gray-300 transition-colors",
+                            "p-1.5 rounded-lg bg-[#1F2937] hover:bg-[#374151] text-gray-300 transition-colors",
                             readOnly ? "flex-1 flex items-center justify-center gap-2" : ""
                         )}
                         title="View History"
                     >
-                        <History className="w-4 h-4" />
-                        {readOnly && <span className="text-xs font-medium">History</span>}
+                        <History className="w-3.5 h-3.5" />
+                        {readOnly && <span className="text-[10px] font-medium">History</span>}
                     </button>
 
                     {!readOnly && (
                         <button
                             onClick={() => onDelete(item.id)}
-                            className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 transition-colors"
+                            className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 transition-colors"
                             title="Delete Item"
                         >
-                            <X className="w-4 h-4" />
+                            <X className="w-3.5 h-3.5" />
                         </button>
                     )}
                 </div>
@@ -683,7 +682,7 @@ const Inventory = () => {
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+        <div className="space-y-4 md:space-y-6 animate-in fade-in duration-500 pb-20 p-4 md:p-6 lg:p-8 max-w-screen-2xl mx-auto">
             <CreateItemModal
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
@@ -695,65 +694,74 @@ const Inventory = () => {
 
 
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-white mb-2">Inventory Management</h1>
-                    <p className="text-gray-400">Manage and track all your equipment</p>
+                    <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-white mb-1">Inventory</h1>
+                    <p className="text-gray-400 text-xs md:text-sm">Manage and track all your equipment</p>
                 </div>
                 {user?.role !== 'EMPLOYEE' && (
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 md:gap-3">
                         <button
                             onClick={() => setIsCategoryModalOpen(true)}
-                            className="bg-[#1F2937] hover:bg-[#374151] text-gray-300 px-4 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-all border border-[#374151]"
+                            className="flex-1 sm:flex-none bg-[#1F2937] hover:bg-[#374151] text-gray-300 px-3 py-2 md:px-4 md:py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all border border-[#374151] text-xs md:text-sm"
                         >
-                            <Plus className="w-4 h-4" /> Add Category
+                            <Plus className="w-3.5 h-3.5 md:w-4 md:h-4" /> Category
                         </button>
                         <button
                             onClick={() => setIsModalOpen(true)}
-                            className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 shadow-lg shadow-blue-600/20 transition-all"
+                            className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20 transition-all text-xs md:text-sm"
                         >
-                            <Plus className="w-5 h-5" /> Add Equipment
+                            <Plus className="w-3.5 h-3.5 md:w-4 md:h-4" /> Add Item
                         </button>
                     </div>
                 )}
             </div>
 
             {/* Filters & Search */}
-            <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex gap-2 items-center overflow-x-auto pb-2 md:pb-0 hide-scrollbar">
+            <div className="space-y-4">
+                {/* Search Bar */}
+                <div className="relative w-full">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-gray-500" />
+                    <input
+                        type="text"
+                        placeholder="Search equipment by name or ID..."
+                        className="w-full h-10 md:h-12 bg-[#151A21] border border-[#1F2937] rounded-xl pl-10 md:pl-12 pr-4 text-xs md:text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-all"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                    />
+                </div>
+
+                <div className="flex items-center gap-2 overflow-x-auto pb-2 hide-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
                     <button
                         onClick={() => setSelectedCategory('all')}
                         className={cn(
-                            "px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-colors",
+                            "px-4 py-2 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all border",
                             selectedCategory === 'all'
-                                ? "bg-blue-600 text-white"
-                                : "bg-[#151A21] text-gray-400 border border-[#1F2937] hover:bg-[#1F2937] hover:text-white"
+                                ? "bg-blue-600 text-white border-blue-500 shadow-lg shadow-blue-900/20"
+                                : "bg-[#111315] text-gray-500 border-[#1F2937] hover:border-gray-600 hover:text-gray-300"
                         )}
                     >
-                        All
+                        All Gear
                     </button>
                     {categories?.map(cat => (
                         <button
                             key={cat.id}
                             onClick={() => setSelectedCategory(cat.id)}
                             className={cn(
-                                "px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-colors",
+                                "px-4 py-2 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all border",
                                 selectedCategory === cat.id
-                                    ? "bg-blue-600 text-white"
-                                    : "bg-[#151A21] text-gray-400 border border-[#1F2937] hover:bg-[#1F2937] hover:text-white"
+                                    ? "bg-blue-600 text-white border-blue-500 shadow-lg shadow-blue-900/20"
+                                    : "bg-[#111315] text-gray-500 border-[#1F2937] hover:border-gray-600 hover:text-gray-300"
                             )}
                         >
                             {cat.name}
                         </button>
                     ))}
 
-                    <div className="w-px h-8 bg-[#1F2937] mx-2"></div>
+                    <div className="w-px h-6 bg-[#1F2937] mx-1 md:mx-2 shrink-0"></div>
 
-                    <button className="px-4 py-2.5 bg-[#151A21] border border-[#1F2937] rounded-xl text-sm font-medium text-gray-300 hover:text-white flex items-center gap-2">
-                        All Status <ChevronDown className="w-4 h-4" />
-                    </button>
-                    <button className="p-2.5 bg-[#151A21] border border-[#1F2937] rounded-xl text-gray-400 hover:text-white">
-                        <Filter className="w-5 h-5" />
+                    <button className="px-4 py-2 bg-[#111315] border border-[#1F2937] rounded-xl text-[10px] md:text-xs font-black uppercase tracking-wider text-gray-500 hover:text-gray-300 flex items-center gap-2 transition-all">
+                        Status <ChevronDown className="w-3 h-3" />
                     </button>
                 </div>
             </div>
@@ -767,7 +775,7 @@ const Inventory = () => {
                         ))}
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6">
                         {inventory?.map(item => (
                             <InventoryCard
                                 key={item.id}
@@ -784,13 +792,13 @@ const Inventory = () => {
                         {user?.role !== 'EMPLOYEE' && (
                             <button
                                 onClick={() => setIsModalOpen(true)}
-                                className="border-2 border-dashed border-[#1F2937] rounded-2xl p-6 flex flex-col items-center justify-center text-gray-500 hover:text-blue-500 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all group min-h-[320px]"
+                                className="border-2 border-dashed border-[#1F2937] rounded-2xl p-4 flex flex-col items-center justify-center text-gray-500 hover:text-blue-500 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all group min-h-[220px]"
                             >
-                                <div className="p-4 rounded-full bg-[#151A21] group-hover:bg-blue-500/20 mb-4 transition-colors">
-                                    <Plus className="w-8 h-8" />
+                                <div className="p-3 rounded-full bg-[#151A21] group-hover:bg-blue-500/20 mb-3 transition-colors">
+                                    <Plus className="w-6 h-6" />
                                 </div>
-                                <h3 className="text-white font-semibold mb-1">Add Equipment</h3>
-                                <p className="text-gray-500 text-sm">Add a new item to inventory</p>
+                                <h3 className="text-white font-semibold mb-1 text-sm">Add Equipment</h3>
+                                <p className="text-gray-500 text-xs">Add a new item to inventory</p>
                             </button>
                         )}
                     </div>
@@ -798,34 +806,16 @@ const Inventory = () => {
             }
 
             {/* Pagination Controls */}
-            {
-                meta && meta.totalPages > 1 && (
-                    <div className="flex items-center justify-between border-t border-[#1F2937] pt-6">
-                        <div className="text-sm text-gray-400">
-                            Showing <span className="text-white font-medium">{(meta.page - 1) * meta.limit + 1}</span> to <span className="text-white font-medium">{Math.min(meta.page * meta.limit, meta.total)}</span> of <span className="text-white font-medium">{meta.total}</span> results
-                        </div>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => setPage(p => Math.max(1, p - 1))}
-                                disabled={page === 1}
-                                className="p-2 rounded-lg bg-[#151A21] border border-[#1F2937] text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                                <ChevronLeft className="w-5 h-5" />
-                            </button>
-                            <div className="flex items-center gap-1 px-4 text-sm font-medium text-gray-300 bg-[#151A21] border border-[#1F2937] rounded-lg">
-                                Page {page} of {meta.totalPages}
-                            </div>
-                            <button
-                                onClick={() => setPage(p => Math.min(meta.totalPages, p + 1))}
-                                disabled={page === meta.totalPages}
-                                className="p-2 rounded-lg bg-[#151A21] border border-[#1F2937] text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                                <ChevronRight className="w-5 h-5" />
-                            </button>
-                        </div>
-                    </div>
-                )
-            }
+            <div className="mt-8 flex justify-center pb-10">
+                <Pagination
+                    currentPage={page}
+                    totalPages={meta?.totalPages || 0}
+                    onPageChange={(p) => {
+                        setPage(p);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                />
+            </div>
         </div >
     );
 };

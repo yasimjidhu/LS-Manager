@@ -65,8 +65,8 @@ export interface CreateQuotationDto {
 }
 
 export const quotationApi = {
-    getAll: async () => {
-        const { data } = await api.get<Quotation[]>('/quotations');
+    getAll: async (params?: { page?: number; limit?: number; search?: string }) => {
+        const { data } = await api.get<{ data: Quotation[]; meta: any }>('/quotations', { params });
         return data;
     },
     getOne: async (id: string) => {

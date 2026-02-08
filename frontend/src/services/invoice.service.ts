@@ -20,8 +20,8 @@ export interface Invoice {
 }
 
 export const invoiceApi = {
-    getAll: async (params?: { page?: number; limit?: number }) => {
-        const { data } = await api.get('/invoices', { params });
+    getAll: async (params?: { page?: number; limit?: number; search?: string }) => {
+        const { data } = await api.get<{ data: Invoice[]; meta: any }>('/invoices', { params });
         return data;
     },
     getOne: async (id: string) => {

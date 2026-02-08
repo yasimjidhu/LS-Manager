@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { DollarSign, Plus, Trash2, X, Edit2 } from 'lucide-react';
+import { DollarSign, Plus, Trash2, X, Edit2, Search } from 'lucide-react';
 import api from '../../../services/api';
+import { Pagination } from '../../../components/ui';
 import { inventoryApi } from '../../../services/inventory.service';
 
 interface PieceRate {
@@ -37,22 +38,39 @@ const WagePolicies = () => {
     const [roleRate, setRoleRate] = useState('');
     const [description, setDescription] = useState('');
 
+    // Pagination States
+    const [piecePage, setPiecePage] = useState(1);
+    const [rolePage, setRolePage] = useState(1);
+    const limit = 10;
+
+    const [pieceSearch, setPieceSearch] = useState('');
+    const [roleSearch, setRoleSearch] = useState('');
+
     // Fetch Data
-    const { data: pieceRates = [] } = useQuery({
-        queryKey: ['wage-policies', 'piece-rates'],
+    const { data: pieceRatesData = { data: [], meta: { total: 0, totalPages: 0 } } } = useQuery({
+        queryKey: ['wage-policies', 'piece-rates', piecePage, pieceSearch],
         queryFn: async () => {
-            const res = await api.get('/wage-policies/piece-rates');
+            const res = await api.get('/wage-policies/piece-rates', {
+                params: { page: piecePage, limit, search: pieceSearch }
+            });
             return res.data;
         }
     });
 
-    const { data: roleRates = [] } = useQuery({
-        queryKey: ['wage-policies', 'role-rates'],
+    const { data: roleRatesData = { data: [], meta: { total: 0, totalPages: 0 } } } = useQuery({
+        queryKey: ['wage-policies', 'role-rates', rolePage, roleSearch],
         queryFn: async () => {
-            const res = await api.get('/wage-policies/role-rates');
+            const res = await api.get('/wage-policies/role-rates', {
+                params: { page: rolePage, limit, search: roleSearch }
+            });
             return res.data;
         }
     });
+
+    const pieceRates = pieceRatesData.data;
+    const pieceMeta = pieceRatesData.meta;
+    const roleRates = roleRatesData.data;
+    const roleMeta = roleRatesData.meta;
 
     const { data: inventoryData } = useQuery({
         queryKey: ['inventory'],
@@ -166,17 +184,32 @@ const WagePolicies = () => {
 
             {/* Piece Rate Settings */}
             <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-6">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                     <div>
                         <h3 className="text-lg font-semibold text-white">Piece Rate</h3>
                         <p className="text-gray-400 text-sm">Rate per item handled</p>
                     </div>
-                    <button
-                        onClick={() => setShowPieceRateModal(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-semibold transition-colors"
-                    >
-                        <Plus className="w-4 h-4" /> Add Item Rate
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                            <input
+                                type="text"
+                                placeholder="Search items..."
+                                value={pieceSearch}
+                                onChange={(e) => {
+                                    setPieceSearch(e.target.value);
+                                    setPiecePage(1);
+                                }}
+                                className="bg-[#0B0E14] border border-[#1F2937] text-white rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-blue-500 transition-colors w-full md:w-64"
+                            />
+                        </div>
+                        <button
+                            onClick={() => setShowPieceRateModal(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-semibold transition-colors whitespace-nowrap"
+                        >
+                            <Plus className="w-4 h-4" /> Add Item Rate
+                        </button>
+                    </div>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -224,25 +257,48 @@ const WagePolicies = () => {
                         </tbody>
                     </table>
                 </div>
+
+                <div className="mt-4 flex justify-center">
+                    <Pagination
+                        currentPage={piecePage}
+                        totalPages={pieceMeta.totalPages}
+                        onPageChange={setPiecePage}
+                    />
+                </div>
             </div>
 
             {/* Daily Wage Settings */}
             <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-6">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                     <div>
-                        <h3 className="text-lg font-semibold text-white">Daily Wage</h3>
-                        <p className="text-gray-400 text-sm">Rate per day worked</p>
+                        <h3 className="text-lg font-semibold text-white">Role Rates</h3>
+                        <p className="text-gray-400 text-sm">Rate per role/wage type</p>
                     </div>
-                    <button
-                        onClick={() => {
-                            setModalMode('DAILY');
-                            setEditingId(null);
-                            setShowRoleRateModal(true);
-                        }}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-semibold transition-colors"
-                    >
-                        <Plus className="w-4 h-4" /> Add Role Rate
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                            <input
+                                type="text"
+                                placeholder="Search roles..."
+                                value={roleSearch}
+                                onChange={(e) => {
+                                    setRoleSearch(e.target.value);
+                                    setRolePage(1);
+                                }}
+                                className="bg-[#0B0E14] border border-[#1F2937] text-white rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-blue-500 transition-colors w-full md:w-64"
+                            />
+                        </div>
+                        <button
+                            onClick={() => {
+                                setModalMode('DAILY');
+                                setEditingId(null);
+                                setShowRoleRateModal(true);
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-semibold transition-colors whitespace-nowrap"
+                        >
+                            <Plus className="w-4 h-4" /> Add Role Rate
+                        </button>
+                    </div>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -348,6 +404,14 @@ const WagePolicies = () => {
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                <div className="mt-4 flex justify-center">
+                    <Pagination
+                        currentPage={rolePage}
+                        totalPages={roleMeta.totalPages}
+                        onPageChange={setRolePage}
+                    />
                 </div>
             </div >
 

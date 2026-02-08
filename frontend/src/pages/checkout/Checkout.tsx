@@ -3,7 +3,7 @@ import { QrCode, User, CheckCircle2, ChevronRight, Calendar } from 'lucide-react
 import { cn } from '../../lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { JobsService } from '../../services/jobs.service';
-import { employeesApi } from '../../services/employees.service';
+import { employeeApi } from '../../services/employee.service';
 import { Skeleton } from '../../components/ui';
 import { useNavigate } from 'react-router-dom';
 import { QRScannerModal } from '../../components/inventory/QRScannerModal';
@@ -33,10 +33,12 @@ const Checkout = () => {
         queryFn: () => JobsService.getAll({ limit: 1000 })
     });
 
-    const { data: employees } = useQuery({
+    const { data: employeesData } = useQuery({
         queryKey: ['employees'],
-        queryFn: employeesApi.getAll
+        queryFn: () => employeeApi.getAll({ limit: 1000 })
     });
+
+    const employees = employeesData?.data || [];
 
     const handleCheckoutSuccess = (item: any) => {
         setScannedItems(prev => {
@@ -51,14 +53,14 @@ const Checkout = () => {
     const safeJobs = jobsData?.data || [];
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+        <div className="space-y-6 animate-in fade-in duration-500 pb-20 p-4">
             <div>
-                <h1 className="text-3xl font-bold text-white mb-2">Equipment Checkout</h1>
-                <p className="text-gray-400">Streamlined workflow for assigning equipment to jobs</p>
+                <h1 className="text-xl font-bold text-white mb-0.5">Equipment Checkout</h1>
+                <p className="text-gray-400 text-xs">Streamlined workflow for assigning equipment to jobs</p>
             </div>
 
             {/* Stepper */}
-            <div className="bg-[#151A21] border border-[#1F2937] rounded-2xl p-8 mb-8">
+            <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-4 mb-4">
                 <div className="flex justify-between items-center relative">
                     <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-0.5 bg-[#1F2937] -z-0"></div>
                     <div
@@ -95,7 +97,7 @@ const Checkout = () => {
 
                     {/* Step 1: Select Job */}
                     {currentStep === 1 && (
-                        <div className="bg-[#151A21] border border-[#1F2937] rounded-2xl p-6">
+                        <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-4">
                             <h2 className="text-lg font-bold text-white mb-6">Select Job</h2>
                             <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
                                 {jobsLoading ? (
@@ -140,9 +142,9 @@ const Checkout = () => {
 
                     {/* Step 2: Assign Employee */}
                     {currentStep === 2 && (
-                        <div className="bg-[#151A21] border border-[#1F2937] rounded-2xl p-6">
-                            <h2 className="text-lg font-bold text-white mb-6">Assign Employee</h2>
-                            <p className="text-gray-400 mb-6">Who is collecting this equipment?</p>
+                        <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-4">
+                            <h2 className="text-sm font-bold text-white mb-4">Assign Employee</h2>
+                            <p className="text-gray-400 text-xs mb-4">Who is collecting this equipment?</p>
 
                             <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 mb-8">
                                 {employees?.map((emp: any) => (
@@ -195,20 +197,20 @@ const Checkout = () => {
 
                     {/* Step 3: Scan Equipment */}
                     {currentStep === 3 && (
-                        <div className="bg-[#151A21] border border-[#1F2937] rounded-2xl p-10 min-h-[400px] flex flex-col items-center justify-center text-center">
-                            <div className="w-24 h-24 bg-blue-600/10 rounded-3xl flex items-center justify-center mb-8 animate-pulse">
-                                <QrCode className="w-12 h-12 text-blue-500" />
+                        <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-6 min-h-[350px] flex flex-col items-center justify-center text-center">
+                            <div className="w-16 h-16 bg-blue-600/10 rounded-2xl flex items-center justify-center mb-6 animate-pulse">
+                                <QrCode className="w-8 h-8 text-blue-500" />
                             </div>
-                            <h2 className="text-2xl font-bold text-white mb-4">Scan Gear for this Job</h2>
-                            <p className="text-gray-400 mb-10 max-w-md mx-auto">
+                            <h2 className="text-xl font-bold text-white mb-2">Scan Gear for this Job</h2>
+                            <p className="text-gray-400 text-sm mb-6 max-w-md mx-auto">
                                 Every scan will automatically associate the equipment with the selected job and update inventory status in real-time.
                             </p>
 
                             <button
                                 onClick={() => setIsScannerOpen(true)}
-                                className="px-10 py-5 bg-blue-600 hover:bg-blue-500 text-white text-xl font-bold rounded-2xl shadow-2xl shadow-blue-600/20 transition-all flex items-center gap-4 group"
+                                className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white text-lg font-bold rounded-xl shadow-xl shadow-blue-600/20 transition-all flex items-center gap-3 group"
                             >
-                                <QrCode className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                                <QrCode className="w-5 h-5 group-hover:scale-110 transition-transform" />
                                 START SCANNING
                             </button>
 
@@ -236,26 +238,26 @@ const Checkout = () => {
 
                     {/* Step 4: Confirm */}
                     {currentStep === 4 && (
-                        <div className="bg-[#151A21] border border-[#1F2937] rounded-2xl p-10 text-center">
-                            <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+                        <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-6 text-center">
+                            <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <CheckCircle2 className="w-8 h-8 text-emerald-500" />
                             </div>
-                            <h2 className="text-3xl font-bold text-white mb-4">Checkout Session Complete</h2>
-                            <p className="text-gray-400 mb-10 text-lg">
+                            <h2 className="text-xl font-bold text-white mb-2">Checkout Session Complete</h2>
+                            <p className="text-gray-400 mb-6 text-sm">
                                 <span className="text-emerald-400 font-bold">{scannedItems.length} items</span> have been successfully associated with
                                 <span className="text-white font-bold"> {selectedJob?.title}</span>.
                             </p>
 
-                            <div className="flex justify-center gap-4">
+                            <div className="flex justify-center gap-3">
                                 <button
                                     onClick={() => navigate('/inventory')}
-                                    className="px-8 py-3 bg-[#0B0E14] hover:bg-[#1F2937] text-white border border-[#1F2937] font-semibold rounded-xl transition-colors"
+                                    className="px-6 py-2.5 bg-[#0B0E14] hover:bg-[#1F2937] text-white border border-[#1F2937] font-semibold rounded-xl transition-colors text-sm"
                                 >
                                     Back to Inventory
                                 </button>
                                 <button
                                     onClick={() => window.location.reload()}
-                                    className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl transition-colors"
+                                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl transition-colors text-sm"
                                 >
                                     New Checkout
                                 </button>
@@ -266,7 +268,7 @@ const Checkout = () => {
 
                 {/* Summary Sidebar */}
                 <div className="lg:col-span-1">
-                    <div className="bg-[#151A21] border border-[#1F2937] rounded-2xl p-6 h-full sticky top-6">
+                    <div className="bg-[#151A21] border border-[#1F2937] rounded-xl p-4 h-full sticky top-6">
                         <h2 className="text-lg font-bold text-white mb-4">Checkout Summary</h2>
                         {!selectedJob ? (
                             <div className="text-gray-500 text-sm text-center py-10">

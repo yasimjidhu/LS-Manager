@@ -26,8 +26,8 @@ export interface MaintenanceLog {
 }
 
 export const maintenanceApi = {
-    getAll: async () => {
-        const { data } = await api.get<MaintenanceLog[]>('/maintenance');
+    getAll: async (params?: { page?: number; limit?: number; search?: string; status?: string }) => {
+        const { data } = await api.get<{ data: MaintenanceLog[]; meta: any }>('/maintenance', { params });
         return data;
     },
 

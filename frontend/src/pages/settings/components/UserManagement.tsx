@@ -92,59 +92,59 @@ const UserManagement = () => {
                 <table className="w-full text-left border-collapse">
                     <thead>
                         <tr className="border-b border-[#1F2937] bg-[#1A1F26]">
-                            <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">User</th>
-                            <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Role</th>
-                            <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wide text-center">Status</th>
-                            <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wide text-right">Actions</th>
+                            <th className="px-4 py-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">User</th>
+                            <th className="px-4 py-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Role</th>
+                            <th className="px-4 py-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wide text-center">Status</th>
+                            <th className="px-4 py-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wide text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-[#1F2937]">
                         {filteredUsers.length === 0 ? (
                             <tr>
-                                <td colSpan={4} className="px-6 py-8 text-center text-gray-500 text-sm">
+                                <td colSpan={4} className="px-4 py-6 text-center text-gray-500 text-xs">
                                     No users found matching your search.
                                 </td>
                             </tr>
                         ) : (
                             filteredUsers.map((user) => (
                                 <tr key={user.id} className="hover:bg-[#1A1F26]/50 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 font-bold text-sm">
+                                    <td className="px-4 py-3">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-7 h-7 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 font-bold text-xs">
                                                 {(user.employee?.firstName?.[0] || (user.email && user.email[0]) || '?').toUpperCase()}
                                             </div>
                                             <div>
-                                                <div className="text-sm font-medium text-white">
+                                                <div className="text-xs font-medium text-white">
                                                     {user.employee ? `${user.employee.firstName} ${user.employee.lastName}` : 'System User'}
                                                 </div>
-                                                <div className="text-xs text-gray-500">{user.email || 'No Email'}</div>
+                                                <div className="text-[10px] text-gray-500">{user.email || 'No Email'}</div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-4 py-3">
                                         <select
                                             value={user.role}
                                             onChange={(e) => handleRoleChange(user.id, e.target.value as any)}
-                                            className="bg-[#0B0E14] border border-[#1F2937] rounded text-xs text-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
+                                            className="bg-[#0B0E14] border border-[#1F2937] rounded text-[10px] text-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
                                         >
                                             <option value="ADMIN">Admin</option>
                                             <option value="SUPERVISOR">Supervisor</option>
                                             <option value="EMPLOYEE">Employee</option>
                                         </select>
                                     </td>
-                                    <td className="px-6 py-4 text-center">
-                                        <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${user.isActive
+                                    <td className="px-4 py-3 text-center">
+                                        <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide ${user.isActive
                                             ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
                                             : 'bg-red-500/10 text-red-500 border border-red-500/20'
                                             }`}>
                                             {user.isActive ? 'Active' : 'Inactive'}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 text-right">
+                                    <td className="px-4 py-3 text-right">
                                         <button
                                             onClick={() => handleStatusToggle(user.id, user.isActive)}
                                             disabled={updateMutation.isPending}
-                                            className={`text-xs font-medium px-3 py-1.5 rounded transition-colors ${user.isActive
+                                            className={`text-[10px] font-medium px-2 py-1 rounded transition-colors ${user.isActive
                                                 ? 'text-red-400 hover:bg-red-500/10 border border-red-500/30'
                                                 : 'text-emerald-400 hover:bg-emerald-500/10 border border-emerald-500/30'
                                                 }`}
